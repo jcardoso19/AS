@@ -1,0 +1,309 @@
+/* --- RESET GLOBAL --- */
+* {
+    box-sizing: border-box; /* Garante que larguras incluem padding */
+}
+
+/* --- ESTILOS GERAIS --- */
+@import url('https://fonts.googleapis.com/css?family=Oswald:400');
+
+body {
+    margin: 0;
+    padding: 0;
+    background: #181818;
+    font-family: 'Oswald', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- NAVBAR --- */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 65px;
+    background: #1e1e1e;
+    color: #fff;
+    z-index: 1000; /* Garante que fica sempre por cima */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.navbar .navigation {
+    display: flex;
+    align-items: center;
+    margin: 0 10px;
+}
+.button {
+    display: flex;
+    align-items: center;
+    padding: 10px 18px;
+    margin: 0 5px;
+    color: #fff;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-decoration: none;
+    width: 120px;
+}
+.navbar img {
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+    filter: invert(1);
+}
+.nav1 {
+    font-size: 0.9em;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 2px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    margin-left: 2px;
+}
+.button:hover, .button:focus {
+    background: #232323;
+}
+.button:hover .nav1, .button:focus .nav1 {
+    opacity: 0.9;
+}
+
+/* --- LAYOUT DA PÁGINA (ESTRUTURA PRINCIPAL) --- */
+/* Estas regras aplicam-se a PC por defeito */
+
+.main-content {
+    margin-top: 100px; /* Margem segura para não bater na Navbar */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centra horizontalmente */
+    justify-content: flex-start;
+    padding-bottom: 40px;
+    flex: 1; /* Ocupa o espaço restante */
+}
+
+/* --- CARTÕES (Perfil e Formulários) --- */
+.profile-card,
+.profile-form-card {
+    background: #232323;
+    border-radius: 18px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
+    padding: 24px;
+    color: #fff;
+    
+    /* Tamanho fixo e centralização */
+    width: 100%;
+    max-width: 420px; /* Largura máxima do cartão */
+    
+    margin: 0 auto 20px auto; /* Margem automática dos lados centra o bloco */
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative; /* Garante posicionamento correto */
+}
+
+.profile-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 16px;
+    border: 3px solid #4bc0c0;
+}
+
+.profile-name {
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: #4bc0c0;
+}
+
+.profile-email {
+    font-size: 1em;
+    color: #aaa;
+    margin-bottom: 18px;
+}
+
+/* --- BARRAS DE INFORMAÇÃO --- */
+.profile-extra {
+    width: 100%;
+    margin-bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.profile-extra div {
+    font-size: 1em;
+    color: #fff;
+    background: linear-gradient(90deg, #1b1b1b 80%, #4bc0c0 100%);
+    border-radius: 10px;
+    padding: 12px 18px;
+    width: 100%; /* Ocupa largura total do pai */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.profile-extra div b {
+    color: #4bc0c0;
+    margin-right: 8px;
+    font-weight: 600;
+    min-width: 80px;
+    text-align: left;
+}
+
+/* --- BOTÕES --- */
+.profile-buttons {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+    margin-bottom: 18px;
+    justify-content: center;
+    flex-wrap: wrap; /* Permite quebrar linha se necessário */
+}
+
+.profile-btn {
+    background: #4bc0c0;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: 'Oswald', sans-serif;
+    flex: 1; /* Botões crescem para ocupar espaço */
+    min-width: 100px;
+}
+
+.profile-btn:hover {
+    background: #369b9b;
+}
+
+/* --- INPUTS --- */
+input {
+    width: 100%;
+    margin-bottom: 12px;
+    border: none;
+    border-bottom: 1px solid #3f3f3f;
+    outline: none;
+    padding: 8px;
+    background: transparent;
+    color: #fff;
+    font-size: 1em;
+    font-family: 'Oswald', sans-serif;
+    border-radius: 0;
+}
+
+/* --- TRANSAÇÕES --- */
+#reservations-container {
+    background: #181f22;
+    border-radius: 18px;
+    padding: 24px;
+    color: #fff;
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    display: none;
+}
+
+#reservations-title {
+    color: #4bc0c0;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.reservation {
+    background: #232323;
+    border-radius: 10px;
+    margin: 10px 0;
+    padding: 15px;
+    border-left: 5px solid #4bc0c0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.reservation-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* --- GARAGEM --- */
+.carro-item {
+    background: #1b1b1b;
+    border-radius: 10px;
+    margin: 10px 0;
+    padding: 12px 18px;
+    border-left: 5px solid #4bc0c0;
+    text-align: left;
+    position: relative;
+}
+
+.carro-remove-btn {
+    background: #e74c3c;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    color: white;
+    cursor: pointer;
+    position: absolute;
+    right: 10px; /* Botão remover à direita */
+    top: 10px;
+    left: auto; /* Remove posicionamento antigo */
+    transform: none;
+}
+
+#add-car-form {
+    background: #232c33;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+    width: 100%;
+}
+#add-car-form button {
+    width: 100%;
+    background: #4bc0c0;
+    border: none;
+    padding: 10px;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* --- MOBILE (MEDIA QUERIES NO FIM DO FICHEIRO) --- */
+@media (max-width: 700px) {
+    .navbar {
+        justify-content: space-around;
+        padding: 10px 0;
+    }
+    .button {
+        flex-direction: column;
+        width: auto;
+        font-size: 0.8em;
+    }
+    .nav1 {
+        margin-left: 0;
+    }
+    .main-content {
+        margin-top: 110px; /* Mais espaço em mobile */
+        padding: 0 10px;
+    }
+    .profile-card, 
+    .profile-form-card, 
+    #reservations-container {
+        width: 100%;
+        max-width: 100%;
+    }
+    .profile-buttons {
+        flex-direction: column;
+    }
+}

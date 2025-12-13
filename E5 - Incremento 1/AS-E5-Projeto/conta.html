@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MultiPower</title>
+    <link rel="stylesheet" href="assets/css/conta.css">
+    <script src="assets/js/conta.js"></script>
+</head>
+<body>
+    <div class="navbar">
+    <div class="navigation">
+      <a class="button" href="index.html">
+        <img src="assets/images/map.png" style="filter: invert(1);" />
+        <div class="nav1">MAPA</div>
+      </a>
+    </div>
+    <div class="navigation">
+      <a class="button" href="wallet.html">
+        <img src="assets/images/wallet.png" style="filter: invert(1);" />
+        <div class="nav1">WALLET</div>
+      </a>
+    <div class="navigation">
+      <a class="button" href="login.html">
+        <img src="assets/images/logout.png" style="filter: invert(1);" />
+        <div class="nav1">LOGOUT</div>
+      </a>
+    </div>
+  </div>
+    <div class="main-content">
+        <div class="profile-card">
+          <img src="assets/images/conta.png" alt="Account Image" class="profile-image">
+          <div class="profile-name">Nome do Utilizador</div>
+          <div class="profile-email">email@exemplo.com</div>
+          <div class="profile-extra">
+            <div><b>Telefone:</b> <span class="profile-phone"></span></div>
+            <div><b>Morada:</b> <span class="profile-address"></span></div>
+            <div><b>Cidade:</b> <span class="profile-city"></span></div>
+            <div><b>País:</b> <span class="profile-country"></span></div>
+          </div>
+          <div class="profile-buttons">
+            <button class="profile-btn" onclick="toggleGarage()">Garagem</button>
+            <button class="profile-btn" onclick="toggleProfileForm()">Alterar Dados</button>
+            <button id="show-reservations-button" class="profile-btn">Transações</button>
+          </div>
+        </div>
+        <div class="profile-form-card" id="garage-card" style="display:none;">
+          <h1>Garagem</h1>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+            <button id="add-car-btn" title="Adicionar Carro" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#4bc0c0;border:none;border-radius:8px;cursor:pointer;">
+              <img src="assets/images/plus.png" alt="Adicionar" style="width:22px;height:22px;filter:invert(1);" />
+            </button>
+            <button id="remove-car-btn" title="Remover Carro" style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#e74c3c;border:none;border-radius:8px;cursor:pointer;">
+              <img src="assets/images/remove.png" alt="Remover" style="width:22px;height:22px;filter:invert(1);" />
+            </button>
+          </div>
+          <div id="garage-list"></div>
+          <!-- Formulário para adicionar carro -->
+          <form id="add-car-form" style="display:none;margin-top:18px;">
+            <input type="text" name="marca" placeholder="Marca" required>
+            <input type="text" name="modelo" placeholder="Modelo" required>
+            <input type="text" name="ano" placeholder="Ano" required>
+            <input type="text" name="matricula" placeholder="Matrícula" required>
+            <input type="text" name="cor" placeholder="Cor" required>
+            <button class="profile-btn" type="submit" style="margin-top:10px;">Adicionar Carro</button>
+          </form>
+          <!-- Lista de carros para remover -->
+          <div id="remove-car-list" style="display:none;margin-top:18px;"></div>
+        </div>
+        <div class="profile-form-card" id="profile-form-card" style="display:none;">
+          <h1>Alterar Dados do Perfil</h1>
+          <form id="edit-profile-form" style="width: 100%;">
+              <input type="text" name="email" placeholder="Email">
+              <input type="text" name="telefone" placeholder="Telefone">
+              <input type="text" name="morada" placeholder="Morada">
+              <input type="text" name="cidade" placeholder="Cidade">
+              <input type="text" name="codigo_postal" placeholder="Código Postal">
+              <input type="text" name="pais" placeholder="País">
+              <button class="profile-btn" type="submit">Guardar Alterações</button>
+              <button class="profile-btn" type="button" id="cancel-edit-btn" style="background:#888;margin-top:10px;">Cancelar</button>
+          </form>
+          <button class="profile-btn" id="show-password-form-btn" type="button" style="margin-top:10px;">Alterar Password</button>
+          <form id="password-form" style="display:none; margin-top:10px;">
+              <input type="password" name="nova_password" placeholder="Nova Password">
+              <button class="profile-btn" type="submit">Guardar Password</button>
+          </form>
+        </div>
+        <div id="reservations-container" class="profile-form-card" style="display: none;">
+          <h2 id="reservations-title" style="color:#4bc0c0; margin-bottom:18px; letter-spacing:1px;">Transações</h2>
+          <div id="reservations-list"></div>
+        </div>
+    </div>
+</body>
+</html>
