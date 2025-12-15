@@ -1,4 +1,4 @@
-var map = L.map('map').setView([40.6782, -73.9442], 13);
+var map = L.map('map').setView([40.6381, -8.6555], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
@@ -6,9 +6,12 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 L.Control.geocoder().addTo(map);
 
-let carros = [];
-let carroSelecionado = null;
-let saldo = 0;
+let carros = [  
+  { id: 1, marca: "Tesla", modelo: "Model 3" },
+  { id: 2, marca: "Nissan", modelo: "Leaf" },
+  { id: 3, marca: "Renault", modelo: "Zoe" }];
+let carroSelecionado = carros[0];
+let saldo = 10000;
 let estacoes = [];
 let markers = [];
 let estadoAtual = null;
@@ -16,40 +19,43 @@ let estacaoAssociada = null;
 
 async function inicializar() {
   localStorage.setItem('email', 'cliente@multipower.pt');
-  localStorage.setItem('is_admin', '0'); 
+  localStorage.setItem('is_admin', '1'); 
 
   await carregarCarros();
   await carregarSaldo();
   await verificarEstadoAtual();
   
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const centro = { lat: 40.6782, lng: -73.9442 }; 
-      carregarEstacoes(centro);
-    }, () => {
-      const centro = { lat: 40.6782, lng: -73.9442 };
-      carregarEstacoes(centro);
-    });
-  } else {
-    const centro = { lat: 40.6782, lng: -73.9442 };
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const centro = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     carregarEstacoes(centro);
-  }
-  
-  const select = document.getElementById('car-select');
-  select.addEventListener('change', (e) => {
-    carroSelecionado = carros.find(c => c.id == e.target.value);
+  }, () => {
+    const centro = { lat: 40.6381, lng: -8.6555 };  
+    carregarEstacoes(centro);
   });
+} else {
+  const centro = { lat: 40.6381, lng: -8.6555 };  
+  carregarEstacoes(centro);
+}
+
 }
 
 async function carregarCarros() {
   const email = localStorage.getItem('email');
   try {
     const resp = await fetch(`http://localhost:3000/api/carros/${email}`);
-    carros = await resp.json();
-    atualizarSelectCarro();
+    const data = await resp.json(); 
+    if (!data || data.length === 0) throw "Sem carros na API";
+    carros = data;
   } catch (error) {
-    console.error(error);
+    console.warn("API carros falhou, usando carros de teste");
+    carros = [  
+      { id: 1, marca: "Tesla", modelo: "Model 3" },
+      { id: 2, marca: "Nissan", modelo: "Leaf" },
+      { id: 3, marca: "Renault", modelo: "Zoe" }
+    ];
   }
+  atualizarSelectCarro();
 }
 
 function atualizarSelectCarro() {
@@ -87,20 +93,29 @@ async function carregarSaldo() {
 async function carregarEstacoes(centro) {
   markers.forEach(m => map.removeLayer(m));
   markers = [];
-  const raio = 10; 
+
+  const raio = 100; // em km
+  const maxresults = 1000;
 
   try {
-    const response = await fetch(
-      `https://api.openchargemap.io/v3/poi/?output=json&countrycode=US&latitude=${centro.lat}&longitude=${centro.lng}&maxresults=50&distance=${raio}&distanceunit=KM&compact=true&verbose=false&key=1b6229d7-8a8d-4e66-9d0f-2e101e00f789`
-    );
+  const response = await fetch(
+    `https://api.openchargemap.io/v3/poi/?output=json&countrycode=PT&latitude=${centro.lat}&longitude=${centro.lng}&distance=${raio}&maxresults=1000&compact=true&verbose=false&key=TUA_API_KEY_AQUI`
+  );
+
+
     const data = await response.json();
-    
-    data.forEach(poi => {
-      adicionarMarcador(poi);
-    });
+
+  if (!data || data.length === 0) {
+  L.popup()
+    .setLatLng([centro.lat, centro.lng])
+    .setContent("Nenhuma estação encontrada — tente aumentar o raio")
+    .openOn(map);
+  } else {
+      data.forEach(poi => adicionarMarcador(poi));
+    }
 
   } catch (error) {
-    console.error(error);
+    console.error("Erro ao carregar estações:", error);
   }
 }
 
@@ -109,12 +124,12 @@ function adicionarMarcador(poi) {
   const lon = poi.AddressInfo.Longitude;
   const titulo = poi.AddressInfo.Title;
   
-  let cor = '#4bc0c0'; 
-  
+ let cor = '#e74c3c'; // vermelho padrão
   if (estacaoAssociada && estacaoAssociada.estacao_id == poi.ID) {
-    if (estadoAtual === 'reservado') cor = '#f39c12';
-    if (estadoAtual === 'iniciado') cor = '#e74c3c';
-  }
+    if (estadoAtual === 'reservado') cor = '#f39c12'; // laranja
+    if (estadoAtual === 'iniciado') cor = '#c0392b';  // vermelho escuro
+}
+
 
   const icon = L.divIcon({
     className: 'custom-div-icon',
@@ -225,7 +240,7 @@ async function reservarEstacao(poi) {
         await carregarSaldo();
         await verificarEstadoAtual();
         map.closePopup();
-        const centro = { lat: 40.6782, lng: -73.9442 };
+        const centro = { lat: 40.6381, lng: -8.6555 };
         carregarEstacoes(centro);
     } else {
         alert("Erro ao reservar.");
@@ -254,7 +269,7 @@ async function iniciarCarregamento(poi) {
         if (resp.ok) {
             await verificarEstadoAtual();
             map.closePopup();
-            const centro = { lat: 40.6782, lng: -73.9442 };
+            const centro = { lat: 40.6381, lng: -8.6555 };
             carregarEstacoes(centro);
         } else {
             alert("Erro ao iniciar.");
@@ -276,7 +291,7 @@ async function iniciarCarregamentoReservado() {
         if (resp.ok) {
             await verificarEstadoAtual();
             map.closePopup();
-            const centro = { lat: 40.6782, lng: -73.9442 };
+            const centro = { lat: 40.6381, lng: -8.6555 };
             carregarEstacoes(centro);
         }
     } catch (err) {
@@ -296,7 +311,7 @@ async function cancelarReserva() {
         if (resp.ok) {
             await verificarEstadoAtual();
             map.closePopup();
-            const centro = { lat: 40.6782, lng: -73.9442 };
+            const centro = { lat: 40.6381, lng: -8.6555 };
             carregarEstacoes(centro);
         }
     } catch (err) {
@@ -320,7 +335,7 @@ async function terminarCarregamento() {
             await carregarSaldo();
             await verificarEstadoAtual();
             map.closePopup();
-            const centro = { lat: 40.6782, lng: -73.9442 };
+            const centro = { lat: 40.6381, lng: -8.6555 };
             carregarEstacoes(centro);
             document.getElementById('saldo-display').style.color = "#4bc0c0";
         }
