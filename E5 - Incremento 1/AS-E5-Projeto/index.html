@@ -2,48 +2,63 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>MultiPower</title>
   <link rel="stylesheet" href="assets/css/index.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-  <style>
-    /* Remove old map style, handled in CSS file now */
-  </style>
+  <script src="assets/js/index.js" defer></script>
 </head>
 <body>
+
+  <div class="main-content">
+    <div class="map-card">
+      
+      <div class="top-bar">
+        <img src="assets/images/car_electric.png" alt="Carro">
+        
+        <select id="car-select">
+            <option value="" disabled selected>A carregar...</option>
+        </select>
+        
+        <img src="assets/images/wallet.png" alt="Carteira" style="margin-left: 10px;">
+        
+        <span id="saldo-display" class="saldo-text">0.00€</span>
+      </div>
+
+      <div id="map"></div>
+    </div>
+  </div>
+
   <div class="navbar">
     <div class="navigation">
+    <a class="button" href="chat.html">
+        <img src="assets/images/elon.png" alt="Chat" />
+        <div class="nav1">CHAT</div>
+    </a>
+</div>
+    <div class="navigation">
       <a class="button" href="index.html">
-        <img src="assets/images/map.png" style="filter: invert(1);" />
+        <img src="assets/images/map.png" alt="Mapa" />
         <div class="nav1">MAPA</div>
       </a>
     </div>
     <div class="navigation">
       <a class="button" href="wallet.html">
-        <img src="assets/images/wallet.png" style="filter: invert(1);" />
+        <img src="assets/images/wallet.png" alt="Carteira" />
         <div class="nav1">WALLET</div>
       </a>
-    </div>    <div class="navigation">
+    </div>
+    <div class="navigation">
       <a class="button" href="conta.html">
-        <img src="assets/images/conta.png" style="filter: invert(1);"/>
+        <img src="assets/images/conta.png" alt="Conta" />
         <div class="nav1">CONTA</div>
       </a>
     </div>
   </div>
-  <div class="main-content">
-    <div class="map-card">
-      <div style="width:100%;display:flex;justify-content:center;align-items:center;margin:18px 0 10px 0;gap:12px;">
-        <img src="assets/images/car_electric.png" alt="Carro" style="width:32px;height:32px;filter:invert(1);margin-right:6px;">
-        <select id="car-select" style="min-width:220px;max-width:340px;padding:10px;border-radius:8px;background:#232c33;color:#fff;border:none;font-family:'Oswald',sans-serif;"></select>
-        <img src="assets/images/wallet.png" alt="Carteira" style="width:28px;height:28px;filter:invert(1);margin-left:8px;">
-        <span id="saldo-span" style="color:#4bc0c0;font-size:1.1em;font-family:'Oswald',sans-serif;margin-left:2px;">0,00€</span>
-      </div>
-      <div id="map"></div>
-    </div>
-  </div>
+
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-  <script src="assets/js/index.js"></script>
+
 </body>
 </html>

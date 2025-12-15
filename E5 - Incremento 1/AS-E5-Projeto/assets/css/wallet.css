@@ -1,229 +1,78 @@
-/* --- GENERAL STYLES --- */
+/* --- RESET GLOBAL --- */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
 @import url('https://fonts.googleapis.com/css?family=Oswald:400');
 
 body {
-    margin: 0;
-    padding: 0;
+    margin: 0; padding: 0;
     background: #181818;
     font-family: 'Oswald', sans-serif;
     min-height: 100vh;
+    /* Importante para o scroll funcionar bem */
+    display: block; 
+    padding-bottom: 80px; /* Espaço para a navbar não tapar o fim da página */
 }
 
-/* --- NAVBAR --- */
+/* --- BOTTOM NAVBAR --- */
 .navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 65px;
+    position: fixed; bottom: 0; left: 0;
+    width: 100%; height: 70px;
     background: #1e1e1e;
-    color: #fff;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border-top: 1px solid #333;
+    display: flex; justify-content: space-around; align-items: center;
+    z-index: 9999;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
 }
-.navbar .navigation {
-    display: flex;
-    align-items: center;
-    margin: 0 10px;
-}
+.navigation { display: flex; flex: 1; justify-content: center; }
 .button {
-    display: flex;
-    align-items: center;
-    padding: 10px 18px;
-    margin: 0 5px;
-    color: #fff;
-    background: none;
-    border: none;
-    border-radius: 8px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background 0.2s;
-    position: relative;
-    width: 120px;
-    box-sizing: border-box;
-    text-decoration: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: none; border: none; color: #888;
+    width: 100%; height: 100%; text-decoration: none;
 }
-.navbar img {
-    width: 28px;
-    height: 28px;
-    margin-right: 8px;
-    filter: invert(1);
-}
-.nav1 {
-    font-size: 0.9em;
-    font-family: 'Oswald', sans-serif;
-    letter-spacing: 2px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    margin-left: 2px;
-}
-.button:hover, .button:focus {
-    background: #232323;
-}
-.button:hover .nav1, .button:focus .nav1 {
-    opacity: 0.9;
-}
+.navbar img { width: 24px; height: 24px; margin-bottom: 4px; filter: invert(0.6); }
+.nav1 { font-size: 0.7em; }
+.button:hover { color: #4bc0c0; }
+.button:hover img { filter: invert(0.8) sepia(1) saturate(3) hue-rotate(120deg); }
 
-/* --- Isto força estilo mobile para coisas necessarias em todas as paginas --- */
-@media (max-width: 700px) {
-    .navbar {
-        flex-wrap: wrap;
-        height: auto;
-        padding: 10px 0;
-        justify-content: space-between;
-    }
-    .navbar .navigation {
-        margin: 0 2px;
-    }
-    .button {
-        width: 60px;
-        font-size: 0.8em;
-        padding: 8px 2px;
-        flex-direction: column;
-        align-items: center;
-        margin: 0 2px;
-    }
-    .navbar img {
-        width: 22px;
-        height: 22px;
-        margin: 0 0 2px 0;
-    }
-    .nav1 {
-        font-size: 0.6em;
-        margin-left: 0;
-        margin-top: 2px;
-    }
-    .main-content {
-        margin-top: 120px;
-    }
-}
-
-/* --- WALLET PAGE --- */
+/* --- CONTEÚDO --- */
 .main-content {
-    margin-top: 90px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 32px;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding-top: 30px; /* Espaço no topo */
+    display: flex; flex-direction: column; align-items: center; gap: 20px;
 }
+
+/* Cartão de Saldo */
 .wallet-card {
     background: #232323;
-    border-radius: 18px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
-    padding: 24px 24px 16px 24px;
-    min-width: 320px;
-    max-width: 400px;
-    color: #fff;
-    width: 80vw;
-    text-align: center;
-    margin-bottom: 10px;
-    position: relative;
-}
-.wallet-balance {
-    font-size: 2.2em;
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: #4bc0c0;
-}
-.wallet-label {
-    font-size: 1.1em;
-    color: #aaa;
-    margin-bottom: 12px;
-}
-
-.charts-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 32px;
-    justify-content: center;
-    align-items: flex-start;
+    border-radius: 20px;
+    padding: 30px;
     width: 90%;
-    box-sizing: border-box;
-    margin: 0 auto;
-    padding: 0;
-}
-
-.chart-card {
-    background: #232323;
-    border-radius: 18px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
-    padding: 24px 24px 16px 24px;
-    color: #fff;
-    width: 340px;
-    max-width: 95vw;
     text-align: center;
-    box-sizing: border-box;
-    margin: 0;
-    flex: 1 1 1px;
+    position: relative;
+    border: 1px solid #333;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
 }
 
-.chart-card h2 {
-    font-size: 1.1em;
-    color: #4bc0c0;
-    margin-bottom: 10px;
-}
-canvas {
-    background: #181818;
-    border-radius: 10px;
-    margin-top: 10px;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
+.wallet-balance { font-size: 3em; color: #4bc0c0; font-weight: bold; margin: 10px 0; }
+.wallet-label { color: #aaa; letter-spacing: 1px; }
 
+/* Botão Flutuante (+) no Cartão */
 #add-balance-btn {
-    position: absolute;
-    top: 18px;
-    right: 18px;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #4bc0c0;
-    border: none;
-    border-radius: 8px;
+    position: absolute; top: 15px; right: 15px;
+    width: 40px; height: 40px;
+    background: #333; border-radius: 50%; border: none;
+    display: flex; align-items: center; justify-content: center;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(75, 192, 192, 0.10);
-    transition: background 0.2s;
-    z-index: 2;
 }
+#add-balance-btn img { width: 20px; height: 20px; filter: invert(1); }
 
-#add-balance-btn:hover,
-#add-balance-btn:focus {
-    background: #369b9b;
+/* Gráficos */
+.charts-container { width: 90%; display: flex; flex-direction: column; gap: 20px; }
+.chart-card {
+    background: #232323; border-radius: 20px;
+    padding: 20px; border: 1px solid #333;
 }
-
-#add-balance-btn img {
-    width: 22px;
-    height: 22px;
-    filter: invert(1);
-    pointer-events: none;
-}
-
-/* --- Isto força estilo mobile para coisas necessarias nest pagina --- */
-@media (max-width: 700px) {
-    .chart-card {
-        width: 80vw;
-    }
-    .charts-container { 
-        flex-direction: column; 
-        align-items: center; 
-    }
-
-    .wallet-card {
-        min-width: 0;
-        max-width: 100vw;
-        width: 90vw;
-        padding: 18px 8px 16px 8px;
-    }
-    #add-balance-btn {
-        top: 10px;
-        right: 10px;
-        width: 36px;
-        height: 36px;
-    }
-}
+.chart-card h2 { color: #4bc0c0; font-size: 1.1em; margin-top: 0; }
+canvas { width: 100% !important; height: auto !important; }
