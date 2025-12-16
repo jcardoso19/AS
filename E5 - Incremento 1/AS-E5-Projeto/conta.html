@@ -1,105 +1,163 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MultiPower - Conta</title>
+    <title>Minha Conta - MultiPower</title>
     <link rel="stylesheet" href="assets/css/conta.css">
-    <script src="assets/js/conta.js"></script>
+    <script src="assets/js/conta.js" defer></script>
 </head>
 <body>
+
+    <div class="profile-header">
+        <div class="profile-avatar-wrapper">
+            <img src="assets/images/conta.png" alt="Perfil" class="profile-image">
+        </div>
+        <h1 class="profile-name">Carregando...</h1>
+        <div class="profile-email">...</div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-value" id="co2-val">0</span>
+            <span class="stat-label">kg CO₂ Poupado</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value" id="points-val">0</span>
+            <span class="stat-label">Pontos Power</span>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <span class="section-title">Minha Garagem</span>
+        <button onclick="openAddCar()" class="btn-mini-add">+ Adicionar</button>
+    </div>
     
-    <div class="main-content">
-        
-        <div class="profile-card">
-            <img src="assets/images/user_avatar.png" onerror="this.src='https://ui-avatars.com/api/?name=User&background=2563EB&color=fff'" alt="Account Image" class="profile-image">
-            <div class="profile-name">A Carregar...</div>
-            <div class="profile-email">...</div>
+    <div id="garage-list">
+        <p style="text-align:center; color:#666; margin-top:20px;">A carregar garagem...</p>
+    </div>
 
-            <div class="profile-buttons">
-                <button class="profile-btn" onclick="toggleGarage()">
-                    <span>🚗</span> Garagem
-                </button>
-                <button id="show-reservations-button" class="profile-btn">
-                    <span>⚡</span> Transações
-                </button>
-                <button class="profile-btn" onclick="toggleProfileForm()">
-                    <span>⚙️</span> Alterar Dados
-                </button>
-            </div>
+    <div class="section-header">
+        <span class="section-title">Definições</span>
+    </div>
+    <div class="menu-list">
+        <div class="menu-item" onclick="openTransactions()">
+            <span class="menu-icon">⚡</span>
+            <span>Histórico de Carregamentos</span>
+            <span class="menu-arrow">›</span>
         </div>
+        <div class="menu-item" onclick="openEditProfile()">
+            <span class="menu-icon">👤</span>
+            <span>Dados Pessoais</span>
+            <span class="menu-arrow">›</span>
+        </div>
+        <div class="menu-item" style="color: #e74c3c;">
+            <span class="menu-icon">🚪</span>
+            <span>Terminar Sessão</span>
+        </div>
+    </div>
 
-        <div id="garage-card">
-            <button onclick="toggleGarage()" class="close-btn">✕</button>
+    <div id="overlay" class="overlay" onclick="closeAllSheets()"></div>
+
+    <div id="sheet-add-car" class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <h2>Nova Viatura</h2>
+        <form id="add-car-form">
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label">Marca</label>
+                    <input type="text" name="marca" placeholder="Ex: Tesla" required>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label">Modelo</label>
+                    <input type="text" name="modelo" placeholder="Model 3" required>
+                </div>
+            </div>
             
-            <h1>Garagem</h1>
-            
-            <div class="garage-actions">
-                <button id="add-car-btn" class="btn-action-add">+ Adicionar</button>
-                <button id="remove-car-btn" class="btn-action-remove">- Remover</button>
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label">Ano</label>
+                    <input type="number" name="ano" placeholder="2023" required>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label">Matrícula</label>
+                    <input type="text" name="matricula" placeholder="AA-00-AA" required>
+                </div>
             </div>
 
-            <div id="garage-list"></div>
-            
-            <form id="add-car-form" style="display:none; margin-top:20px;">
-                <input type="text" name="marca" placeholder="Marca" required>
-                <input type="text" name="modelo" placeholder="Modelo" required>
-                <input type="text" name="ano" placeholder="Ano" required>
-                <input type="text" name="matricula" placeholder="Matrícula" required>
-                <input type="text" name="cor" placeholder="Cor" required>
-                <button type="submit">Guardar Carro</button>
-            </form>
-            
-            <div id="remove-car-list" style="display:none; margin-top:20px;"></div>
-        </div>
+            <div style="display: flex; gap: 10px;">
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label">Bateria (kWh)</label>
+                    <input type="number" name="battery_size" value="50" required>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label class="form-label">Tipo Ficha</label>
+                    <select name="connection_type">
+                        <option value="33">CCS 2 (Rápido)</option>
+                        <option value="25">Type 2 (Lento)</option>
+                        <option value="2">CHAdeMO</option>
+                    </select>
+                </div>
+            </div>
 
+            <div class="form-group">
+                <label class="form-label">Cor</label>
+                <input type="text" name="cor" placeholder="Ex: Branco">
+            </div>
+
+            <button type="submit" class="btn-primary">Guardar na Garagem</button>
+        </form>
+    </div>
+
+    <div id="sheet-transactions" class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <h2>Histórico</h2>
         <div id="reservations-container">
-            <button onclick="showReservations()" class="close-btn">✕</button>
-            <h2 id="reservations-title">Transações</h2>
-            <div id="reservations-list"></div>
-        </div>
+            </div>
+    </div>
 
-        <div id="profile-form-card" class="profile-form-card">
-            <button onclick="toggleProfileForm()" class="close-btn">✕</button>
-            
-            <h1>Editar Perfil</h1>
-            <form id="edit-profile-form">
-                <input type="text" name="email" placeholder="Email">
-                <input type="text" name="telefone" placeholder="Telefone">
-                <input type="text" name="morada" placeholder="Morada">
-                <input type="text" name="cidade" placeholder="Cidade">
-                <input type="text" name="codigo_postal" placeholder="Código Postal">
-                <input type="text" name="pais" placeholder="País">
-                <button type="submit">Guardar Alterações</button>
-            </form>
-            
-            <hr style="border:0; border-top:1px solid #e5e7eb; margin:25px 0;">
-            
-            <button id="show-password-form-btn" class="profile-btn" style="width:100%; justify-content:center;">Alterar Password</button>
-            <form id="password-form" style="display:none; margin-top:15px;">
-                <input type="password" name="nova_password" placeholder="Nova Password">
-                <button type="submit">Atualizar Password</button>
-            </form>
-        </div>
-
+    <div id="sheet-profile" class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <h2>Editar Perfil</h2>
+        <form id="edit-profile-form">
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" id="edit-email">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Telefone</label>
+                <input type="tel" name="telefone" id="edit-phone">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Morada</label>
+                <input type="text" name="morada" id="edit-address">
+            </div>
+            <button type="submit" class="btn-primary">Atualizar Dados</button>
+        </form>
     </div>
 
     <div class="navbar">
         <div class="navigation">
             <a class="button" href="index.html">
-                <img src="assets/images/map.png" alt="Mapa" />
+                <img src="assets/images/map.png" alt="Mapa">
                 <div class="nav1">MAPA</div>
             </a>
         </div>
         <div class="navigation">
             <a class="button" href="wallet.html">
-                <img src="assets/images/wallet.png" alt="Carteira" />
+                <img src="assets/images/wallet.png" alt="Carteira">
                 <div class="nav1">WALLET</div>
             </a>
         </div>
         <div class="navigation">
-            <a class="button" href="conta.html">
-                <img src="assets/images/conta.png" alt="Conta"/>
+            <a class="button" href="chat.html">
+                <img src="assets/images/elon.png" alt="Chat">
+                <div class="nav1">CHAT</div>
+            </a>
+        </div>
+        <div class="navigation">
+            <a class="button" href="conta.html" style="color: #4bc0c0;">
+                <img src="assets/images/conta.png" alt="Conta" style="filter: invert(0.8) sepia(1) saturate(3) hue-rotate(120deg);">
                 <div class="nav1">CONTA</div>
             </a>
         </div>

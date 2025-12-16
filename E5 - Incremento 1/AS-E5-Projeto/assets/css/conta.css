@@ -1,206 +1,206 @@
-/* --- RESET GLOBAL --- */
+/* --- RESET & GLOBAL --- */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-@import url('https://fonts.googleapis.com/css?family=Oswald:400,500');
+@import url('https://fonts.googleapis.com/css?family=Oswald:300,400,600');
 
 body {
     margin: 0; padding: 0;
-    /* MUDANÇA: Fundo claro */
-    background: #f0f2f5; 
+    background: #121212; /* Fundo mais profundo */
     font-family: 'Oswald', sans-serif;
+    color: #fff;
     min-height: 100vh;
-    padding-bottom: 90px; /* Garante scroll até ao fim */
+    padding-bottom: 90px; /* Espaço para a navbar */
+    overflow-x: hidden;
 }
 
-/* --- BOTTOM NAVBAR (Igual às outras páginas) --- */
-.navbar {
-    position: fixed; bottom: 0; left: 0;
-    width: 100%; height: 70px;
-    background: #ffffff; /* Fundo Branco */
-    border-top: 1px solid #e5e7eb;
-    display: flex; justify-content: space-around; align-items: center;
-    z-index: 9999;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+/* --- HEADER DE PERFIL --- */
+.profile-header {
+    background: linear-gradient(160deg, #1e1e1e 0%, #101010 100%);
+    padding: 50px 20px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    position: relative;
 }
 
-.navigation { display: flex; flex: 1; justify-content: center; }
-
-.button {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: none; border: none;
-    color: #6b7280; /* Cinzento */
-    width: 100%; height: 100%; text-decoration: none;
-    transition: color 0.2s;
+/* Círculo da foto com efeito de brilho */
+.profile-avatar-wrapper {
+    position: relative;
+    margin-bottom: 15px;
 }
-
-/* Ícones base cinzentos */
-.navbar img { 
-    width: 24px; height: 24px; margin-bottom: 4px; 
-    filter: invert(40%) sepia(8%) saturate(544%) hue-rotate(186deg) brightness(96%) contrast(88%);
-}
-
-.nav1 { font-size: 0.7em; letter-spacing: 0.5px; font-weight: 500; }
-
-/* ATIVO: Conta */
-.button[href="conta.html"], .button:hover { 
-    color: #2563EB; /* Azul MultiPower */
-}
-
-.button[href="conta.html"] img, .button:hover img { 
-    filter: invert(31%) sepia(87%) saturate(2548%) hue-rotate(213deg) brightness(96%) contrast(92%);
-}
-
-/* --- PERFIL --- */
-.main-content {
-    margin-top: 40px;
-    width: 100%;
-    display: flex; flex-direction: column; align-items: center;
-}
-
-.profile-card {
-    width: 90%; max-width: 400px;
-    text-align: center;
-    margin-bottom: 30px;
-}
-
 .profile-image {
     width: 110px; height: 110px;
-    border-radius: 50%; object-fit: cover;
-    /* MUDANÇA: Borda Azul */
-    border: 3px solid #2563EB; 
-    margin-bottom: 15px;
-    /* Sombra azul suave */
-    box-shadow: 0 0 20px rgba(37, 99, 235, 0.2); 
-    background: #fff; /* Fundo branco caso a img seja transparente */
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #4bc0c0;
+    box-shadow: 0 0 25px rgba(75, 192, 192, 0.3);
+    background: #000;
 }
 
-/* MUDANÇA: Cores de texto escuras */
-.profile-name { font-size: 1.8em; color: #1f2937; margin: 5px 0; font-weight: 500; }
-.profile-email { color: #6b7280; margin-bottom: 25px; }
+.profile-name { font-size: 1.8em; font-weight: 600; letter-spacing: 1px; color: #fff; margin: 0; }
+.profile-email { color: #888; font-size: 0.9em; margin-top: 5px; font-weight: 300; }
 
-/* Botões Grandes do Menu */
-.profile-buttons {
-    display: flex; flex-direction: column; gap: 15px;
-    width: 100%;
+/* --- ESTATÍSTICAS (GAMIFICATION) --- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    width: 90%;
+    max-width: 450px;
+    margin: -25px auto 20px; /* Sobrepõe ligeiramente o header */
+    position: relative;
+    z-index: 10;
 }
 
-.profile-btn {
-    /* MUDANÇA: Botões Brancos estilo cartão */
-    background: #ffffff; 
-    color: #374151; /* Texto cinza escuro */
-    border: 1px solid #e5e7eb; 
-    border-radius: 12px;
-    padding: 18px; font-size: 1.1em;
-    cursor: pointer; transition: 0.2s;
-    font-family: 'Oswald', sans-serif;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-}
-
-.profile-btn:active { transform: scale(0.98); background: #f9fafb; }
-.profile-btn:hover { border-color: #2563EB; color: #2563EB; }
-
-/* --- POPUPS / MODAIS (Garagem, Transações, Editar) --- */
-.profile-form-card, #reservations-container, #garage-card {
-    position: fixed; bottom: 0; left: 0;
-    width: 100%; height: 85vh;
-    
-    /* MUDANÇA: Modal Branco */
-    background: #ffffff; 
-    color: #333;
-    
-    border-radius: 20px 20px 0 0;
-    padding: 25px;
-    z-index: 10000; /* Acima da navbar */
-    overflow-y: auto;
-    box-shadow: 0 -5px 30px rgba(0,0,0,0.2);
-    display: none; /* JS controla isto */
-    animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-/* Traço decorativo no topo do modal */
-.profile-form-card::before, #reservations-container::before, #garage-card::before {
-    content: ''; display: block;
-    width: 50px; height: 5px;
-    background: #e5e7eb; /* Cinza claro */
-    border-radius: 5px;
-    margin: 0 auto 20px auto;
-}
-
-/* Títulos dentro dos modais */
-h1, h2 { color: #2563EB; text-align: center; margin-top: 0; }
-
-/* --- FORMULÁRIOS --- */
-input {
-    width: 100%; padding: 12px; margin-bottom: 15px;
-    /* MUDANÇA: Inputs claros */
-    background: #f9fafb; 
-    border: 1px solid #e5e7eb;
-    color: #333; 
-    border-radius: 8px; font-family: 'Oswald', sans-serif;
-    outline: none;
-}
-input:focus { border-color: #2563EB; background: #fff; }
-
-/* Botão de Guardar (Submit) */
-button[type="submit"] {
-    width: 100%; 
-    background: #2563EB; /* Azul */
+.stat-card {
+    background: #252525;
+    border-radius: 16px;
     padding: 15px;
-    border: none; border-radius: 8px; color: #fff; font-size: 1.1em;
-    cursor: pointer;
-}
-button[type="submit"]:hover { background: #1e40af; }
-
-/* Botão de Fechar (X) */
-.close-btn {
-    position: absolute; top: 15px; right: 15px; 
-    background: none; border: none; 
-    color: #9ca3af; font-size: 1.5em; 
-    cursor: pointer; padding: 5px;
+    text-align: center;
+    border: 1px solid #333;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    display: flex; flex-direction: column; justify-content: center;
 }
 
-/* --- LISTAS (Carros e Transações) --- */
-.carro-item, .reservation {
-    /* MUDANÇA: Item claro */
-    background: #f9fafb; 
-    padding: 15px;
-    margin-bottom: 10px; border-radius: 10px;
-    border: 1px solid #e5e7eb;
-    border-left: 4px solid #2563EB; /* Borda lateral azul */
-    color: #333;
-    display: flex; flex-direction: column; gap: 5px;
-}
+.stat-value { font-size: 1.6em; color: #4bc0c0; font-weight: bold; line-height: 1.2; }
+.stat-label { font-size: 0.75em; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; }
 
-.carro-item b { font-size: 1.1em; color: #1f2937; }
-.carro-item span { color: #6b7280; font-size: 0.9em; }
-
-/* Transações específicas */
-.reservation-row {
+/* --- TÍTULOS DE SECÇÃO --- */
+.section-header {
+    width: 90%; max-width: 450px; margin: 25px auto 15px;
     display: flex; justify-content: space-between; align-items: center;
 }
-.reservation-value { font-weight: bold; color: #2563EB; font-size: 1.1em; }
-.reservation-date { color: #6b7280; font-size: 0.9em; }
+.section-title { font-size: 1.2em; color: #fff; font-weight: normal; border-left: 3px solid #4bc0c0; padding-left: 10px; }
 
-/* Botão Remover Carro */
-.carro-remove-btn {
-    background: #fee2e2; color: #dc2626; /* Vermelho claro */
-    border: 1px solid #fecaca; padding: 8px 12px;
-    border-radius: 6px; cursor: pointer;
-    display: flex; align-items: center; gap: 5px;
-    margin-bottom: 5px; width: fit-content;
+/* Botão "Adicionar" pequeno */
+.btn-mini-add {
+    background: rgba(75, 192, 192, 0.1);
+    color: #4bc0c0;
+    border: 1px solid #4bc0c0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
 }
-.carro-remove-btn img { width: 16px; height: 16px; filter: none; } /* Ícone vermelho original */
+.btn-mini-add:active { background: #4bc0c0; color: #000; }
 
-/* Botões de Ação na Garagem (+ Adicionar / - Remover) */
-.garage-actions {
-    display: flex; justify-content: center; gap: 15px; margin-bottom: 20px;
+/* --- LISTA DA GARAGEM --- */
+#garage-list {
+    width: 90%; max-width: 450px; margin: 0 auto;
+    display: flex; flex-direction: column; gap: 15px;
 }
-.btn-action-add {
-    background: #2563EB; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;
+
+/* Cartão do Carro */
+.car-card {
+    background: linear-gradient(145deg, #2a2a2a, #232323);
+    border-radius: 16px;
+    padding: 15px 20px;
+    display: flex; align-items: center;
+    border: 1px solid #333;
+    position: relative;
+    overflow: hidden;
 }
-.btn-action-remove {
-    background: #fff; color: #dc2626; border: 1px solid #dc2626; padding: 10px 20px; border-radius: 8px; cursor: pointer;
+.car-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #4bc0c0;
 }
+
+.car-icon-box {
+    font-size: 2em; margin-right: 15px;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+}
+
+.car-info { flex: 1; }
+.car-name { font-size: 1.2em; font-weight: bold; color: #fff; display: block; margin-bottom: 4px; }
+.car-meta { font-size: 0.85em; color: #999; display: flex; gap: 10px; }
+.car-tag { background: #1a1a1a; padding: 2px 6px; border-radius: 4px; border: 1px solid #444; }
+
+.btn-delete {
+    background: none; border: none; color: #e74c3c;
+    font-size: 1.2em; opacity: 0.5; padding: 10px; cursor: pointer;
+}
+.btn-delete:active { opacity: 1; transform: scale(1.1); }
+
+/* --- MENU DE OPÇÕES (Lista) --- */
+.menu-list {
+    width: 90%; max-width: 450px; margin: 0 auto;
+    background: #252525; border-radius: 16px;
+    overflow: hidden; border: 1px solid #333;
+}
+.menu-item {
+    padding: 18px 20px;
+    border-bottom: 1px solid #333;
+    display: flex; align-items: center;
+    cursor: pointer; color: #eee;
+    font-size: 1.1em;
+}
+.menu-item:last-child { border-bottom: none; }
+.menu-item:active { background: #333; }
+.menu-icon { margin-right: 15px; font-size: 1.2em; width: 25px; text-align: center; }
+.menu-arrow { margin-left: auto; color: #555; font-size: 1.2em; }
+
+/* --- BOTTOM SHEET (MODAL DESLIZANTE) --- */
+.overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); z-index: 2000;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    backdrop-filter: blur(4px);
+}
+.overlay.active { opacity: 1; pointer-events: all; }
+
+.bottom-sheet {
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: #1e1e1e;
+    border-radius: 25px 25px 0 0;
+    padding: 10px 25px 40px;
+    transform: translateY(100%); 
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 2001;
+    border-top: 1px solid #333;
+    max-height: 85vh; overflow-y: auto;
+}
+.bottom-sheet.active { transform: translateY(0); }
+
+/* Pega para arrastar (visual) */
+.sheet-handle {
+    width: 40px; height: 5px; background: #444;
+    border-radius: 10px; margin: 10px auto 25px;
+}
+
+/* Formulários */
+h2 { margin-top: 0; color: #fff; font-weight: normal; text-align: center; margin-bottom: 20px; }
+
+.form-group { margin-bottom: 15px; }
+.form-label { display: block; color: #888; font-size: 0.9em; margin-bottom: 8px; margin-left: 5px; }
+
+input, select {
+    width: 100%; padding: 14px;
+    background: #2a2a2a; border: 1px solid #444;
+    border-radius: 12px; color: #fff;
+    font-size: 1em; font-family: 'Oswald', sans-serif;
+    outline: none; transition: border-color 0.2s;
+}
+input:focus, select:focus { border-color: #4bc0c0; background: #333; }
+
+.btn-primary {
+    width: 100%; background: #4bc0c0; color: #000;
+    border: none; padding: 16px; border-radius: 12px;
+    font-size: 1.1em; font-weight: bold; margin-top: 20px;
+    cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+}
+
+/* NAVBAR (Cópia para consistência) */
+.navbar {
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
+    background: #1e1e1e; border-top: 1px solid #333;
+    display: flex; justify-content: space-around; align-items: center;
+    z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+}
+.navigation { display: flex; flex: 1; justify-content: center; }
+.button {
+    display: flex; flex-direction: column; align-items: center;
+    background: none; border: none; color: #888; text-decoration: none;
+}
+.navbar img { width: 24px; height: 24px; margin-bottom: 4px; filter: invert(0.6); }
+.nav1 { font-size: 0.7em; letter-spacing: 1px; }

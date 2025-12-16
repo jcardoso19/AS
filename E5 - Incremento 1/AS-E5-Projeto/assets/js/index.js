@@ -1,340 +1,232 @@
+// Configuração Mapa
 var map = L.map('map').setView([40.6782, -73.9442], 13);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap &copy; CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19
 }).addTo(map);
 
-L.Control.geocoder().addTo(map);
+var control = L.Routing.control({
+    waypoints: [],
+    routeWhileDragging: false,
+    lineOptions: { styles: [{ color: '#4bc0c0', opacity: 0.8, weight: 6 }] },
+    createMarker: function() { return null; },
+    show: false
+}).addTo(map);
 
 let carros = [];
 let carroSelecionado = null;
 let saldo = 0;
-let estacoes = [];
-let markers = [];
-let estadoAtual = null;
-let estacaoAssociada = null;
+let dadosTransacaoTemp = {}; // Guarda dados temporários para o pagamento
 
-async function inicializar() {
-  localStorage.setItem('email', 'cliente@multipower.pt');
-  localStorage.setItem('is_admin', '0'); 
-
-  await carregarCarros();
-  await carregarSaldo();
-  await verificarEstadoAtual();
-  
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition((pos) => {
-      const centro = { lat: 40.6782, lng: -73.9442 }; 
-      carregarEstacoes(centro);
-    }, () => {
-      const centro = { lat: 40.6782, lng: -73.9442 };
-      carregarEstacoes(centro);
-    });
-  } else {
-    const centro = { lat: 40.6782, lng: -73.9442 };
+// --- INICIALIZAÇÃO ---
+document.addEventListener('DOMContentLoaded', async () => {
+    localStorage.setItem('email', 'cliente@multipower.pt');
+    await carregarCarros();
+    await carregarSaldo();
+    
+    // Carregar Estações
+    const centro = { lat: 40.6782, lng: -73.9442 }; 
     carregarEstacoes(centro);
-  }
-  
-  const select = document.getElementById('car-select');
-  select.addEventListener('change', (e) => {
-    carroSelecionado = carros.find(c => c.id == e.target.value);
-  });
-}
+    
+    // Listener troca de carro
+    document.getElementById('car-select').addEventListener('change', (e) => {
+        carroSelecionado = carros.find(c => c.id == e.target.value);
+        carregarEstacoes(centro); // Recarregar cores
+    });
+});
 
 async function carregarCarros() {
-  const email = localStorage.getItem('email');
-  try {
-    const resp = await fetch(`http://localhost:3000/api/carros/${email}`);
-    carros = await resp.json();
-    atualizarSelectCarro();
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-function atualizarSelectCarro() {
-  const select = document.getElementById('car-select');
-  select.innerHTML = '';
-  
-  if (carros.length === 0) {
-    const option = document.createElement('option');
-    option.text = "Sem carros";
-    select.add(option);
-    return;
-  }
-
-  carros.forEach((carro, index) => {
-    const option = document.createElement('option');
-    option.value = carro.id;
-    option.text = `${carro.marca} ${carro.modelo}`;
-    select.add(option);
-    if (index === 0) carroSelecionado = carro;
-  });
+    try {
+        const email = localStorage.getItem('email');
+        const resp = await fetch(`http://localhost:3000/api/carros/${email}`);
+        carros = await resp.json();
+        
+        const select = document.getElementById('car-select');
+        select.innerHTML = '';
+        
+        if(carros.length > 0) {
+            carros.forEach((c, index) => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.text = `${c.marca} ${c.modelo}`;
+                select.add(opt);
+                if(index === 0) carroSelecionado = c;
+            });
+        } else {
+            select.innerHTML = '<option>Sem carros</option>';
+        }
+    } catch(e) { console.error(e); }
 }
 
 async function carregarSaldo() {
-  const email = localStorage.getItem('email');
-  try {
-    const resp = await fetch(`http://localhost:3000/api/wallet/${email}`);
-    const data = await resp.json();
-    saldo = parseFloat(data.saldo);
-    document.getElementById('saldo-display').textContent = `${saldo.toFixed(2)}€`;
-  } catch (error) {
-    console.error(error);
-  }
+    try {
+        const resp = await fetch(`http://localhost:3000/api/wallet/${localStorage.getItem('email')}`);
+        const data = await resp.json();
+        saldo = data.saldo;
+        document.getElementById('saldo-display').textContent = `${saldo.toFixed(2)}€`;
+    } catch(e) {}
 }
 
 async function carregarEstacoes(centro) {
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
-  const raio = 10; 
-
-  try {
-    const response = await fetch(
-      `https://api.openchargemap.io/v3/poi/?output=json&countrycode=US&latitude=${centro.lat}&longitude=${centro.lng}&maxresults=50&distance=${raio}&distanceunit=KM&compact=true&verbose=false&key=1b6229d7-8a8d-4e66-9d0f-2e101e00f789`
-    );
-    const data = await response.json();
-    
-    data.forEach(poi => {
-      adicionarMarcador(poi);
-    });
-
-  } catch (error) {
-    console.error(error);
-  }
+    try {
+        const response = await fetch(
+            `https://api.openchargemap.io/v3/poi/?output=json&countrycode=US&latitude=${centro.lat}&longitude=${centro.lng}&maxresults=30&distance=5&compact=true&verbose=false&key=1b6229d7-8a8d-4e66-9d0f-2e101e00f789`
+        );
+        const data = await response.json();
+        data.forEach(poi => adicionarMarcador(poi));
+    } catch (error) { console.error(error); }
 }
 
 function adicionarMarcador(poi) {
-  const lat = poi.AddressInfo.Latitude;
-  const lon = poi.AddressInfo.Longitude;
-  const titulo = poi.AddressInfo.Title;
-  
-  let cor = '#4bc0c0'; 
-  
-  if (estacaoAssociada && estacaoAssociada.estacao_id == poi.ID) {
-    if (estadoAtual === 'reservado') cor = '#f39c12';
-    if (estadoAtual === 'iniciado') cor = '#e74c3c';
-  }
-
-  const icon = L.divIcon({
-    className: 'custom-div-icon',
-    html: `<div style="background-color:${cor};width:12px;height:12px;border-radius:50%;border:2px solid white;box-shadow:0 0 4px black;"></div>`,
-    iconSize: [12, 12],
-    iconAnchor: [6, 6]
-  });
-
-  const marker = L.marker([lat, lon], { icon: icon }).addTo(map);
-  
-  marker.on('click', () => {
-    mostrarPopup(poi);
-  });
-  
-  markers.push(marker);
-}
-
-function mostrarPopup(poi) {
-  const lat = poi.AddressInfo.Latitude;
-  const lng = poi.AddressInfo.Longitude;
-  
-  let conteudo = `
-    <div style="font-family:'Oswald',sans-serif; text-align:center; min-width:200px;">
-      <h3 style="color:#232323; margin-top:0;">${poi.AddressInfo.Title}</h3>
-      <p style="color:#666; font-size:0.9em;">${poi.AddressInfo.AddressLine1 || ''}</p>
-  `;
-
-  if (!carroSelecionado) {
-    conteudo += `<p style="color:#e74c3c;">Selecione um carro primeiro.</p></div>`;
-  } else if (estadoAtual) {
-    if (estacaoAssociada && estacaoAssociada.estacao_id == poi.ID) {
-        if (estadoAtual === 'reservado') {
-            conteudo += `
-                <p style="color:#f39c12; font-weight:bold;">Reservado</p>
-                <button onclick="iniciarCarregamentoReservado()" style="width:100%; background:#4bc0c0; color:white; border:none; padding:10px; border-radius:5px; margin-bottom:5px; cursor:pointer;">Iniciar Carregamento</button>
-                <button onclick="cancelarReserva()" style="width:100%; background:#e74c3c; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Cancelar Reserva</button>
-            `;
-        } else if (estadoAtual === 'iniciado') {
-            conteudo += `
-                <p style="color:#e74c3c; font-weight:bold;">A Carregar...</p>
-                <button onclick="terminarCarregamento()" style="width:100%; background:#e74c3c; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Terminar</button>
-            `;
-        }
-    } else {
-        conteudo += `<p style="color:#666;">Já tem uma estação ativa.</p>`;
-    }
-  } else {
-    conteudo += `
-        <button onclick='reservarEstacao(${JSON.stringify(poi).replace(/'/g, "&#39;")})' style="width:100%; background:#f39c12; color:white; border:none; padding:10px; border-radius:5px; margin-bottom:5px; cursor:pointer;">Reservar (1.00€)</button>
-        <button onclick='iniciarCarregamento(${JSON.stringify(poi).replace(/'/g, "&#39;")})' style="width:100%; background:#4bc0c0; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer;">Carregar Agora</button>
-    `;
-  }
-
-  conteudo += `</div>`;
-
-  L.popup()
-    .setLatLng([lat, lng])
-    .setContent(conteudo)
-    .openOn(map);
-}
-
-async function verificarEstadoAtual() {
-  const email = localStorage.getItem('email');
-  try {
-    const resp = await fetch(`http://localhost:3000/api/estado/${email}`);
-    const data = await resp.json();
+    const lat = poi.AddressInfo.Latitude;
+    const lon = poi.AddressInfo.Longitude;
     
-    if (data.ativo) {
-        estadoAtual = data.status;
-        estacaoAssociada = data;
-        
-        if (estadoAtual === 'iniciado') {
-            document.getElementById('saldo-display').textContent = "A carregar...";
-            document.getElementById('saldo-display').style.color = "#e74c3c";
-        }
-    } else {
-        estadoAtual = null;
-        estacaoAssociada = null;
+    // Lógica de compatibilidade visual
+    let cor = '#4bc0c0'; // Verde
+    const estacaoTipo = (poi.ID % 2 === 0) ? 33 : 25; // Simulação
+    
+    if (carroSelecionado && carroSelecionado.connection_type !== estacaoTipo) {
+        cor = '#7f8c8d'; // Cinza (Incompatível)
     }
-  } catch (err) {
-    console.error(err);
-  }
-}
 
-async function reservarEstacao(poi) {
-  if (saldo < 1) {
-    alert("Saldo insuficiente!");
-    return;
-  }
-  
-  const email = localStorage.getItem('email');
-  
-  try {
-    const resp = await fetch('http://localhost:3000/api/reservar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            email,
-            estacao_id: poi.ID,
-            carro_id: carroSelecionado.id,
-            lat: poi.AddressInfo.Latitude,
-            lon: poi.AddressInfo.Longitude,
-            endereco: poi.AddressInfo.AddressLine1
-        })
+    const icon = L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div style="background-color:${cor};width:14px;height:14px;border-radius:50%;border:2px solid white;box-shadow:0 0 10px ${cor};"></div>`,
+        iconSize: [14, 14]
     });
 
-    if (resp.ok) {
-        await carregarSaldo();
-        await verificarEstadoAtual();
-        map.closePopup();
-        const centro = { lat: 40.6782, lng: -73.9442 };
-        carregarEstacoes(centro);
-    } else {
-        alert("Erro ao reservar.");
-    }
-  } catch (err) {
-    console.error(err);
-  }
+    const marker = L.marker([lat, lon], { icon: icon }).addTo(map);
+
+    marker.on('click', () => {
+        // Calcular rota para obter tempo estimado
+        if (navigator.geolocation) {
+             navigator.geolocation.getCurrentPosition(pos => {
+                 control.setWaypoints([
+                     L.latLng(pos.coords.latitude, pos.coords.longitude),
+                     L.latLng(lat, lon)
+                 ]);
+                 
+                 // Ouvir o evento de rota encontrada para pegar o tempo real
+                 control.on('routesfound', function(e) {
+                    const routes = e.routes;
+                    const summary = routes[0].summary;
+                    // Guardar tempo em minutos globalmente ou passar para o popup
+                    window.tempoEstimadoViagem = Math.round(summary.totalTime / 60);
+                 });
+             });
+        }
+        mostrarPopup(poi, estacaoTipo);
+    });
 }
 
-async function iniciarCarregamento(poi) {
-    const email = localStorage.getItem('email');
+function mostrarPopup(poi, tipoEstacao) {
+    const lat = poi.AddressInfo.Latitude;
+    const lng = poi.AddressInfo.Longitude;
+    const precoKwh = 0.45;
+    
+    // Dados para cálculo
+    const bateria = carroSelecionado ? (carroSelecionado.battery_size || 50) : 50;
+    const energiaNecessaria = bateria * 0.60; // Simula 60% carga
+    const tempoCarga = Math.round((energiaNecessaria / 150) * 60);
+    const custoEstimado = (energiaNecessaria * precoKwh).toFixed(2);
+    
+    // Preparar Objeto de Transação para usar no Pagamento
+    const dadosPagamento = {
+        stationName: poi.AddressInfo.Title,
+        address: poi.AddressInfo.AddressLine1,
+        total: custoEstimado,
+        energy: energiaNecessaria.toFixed(1),
+        timeCharge: tempoCarga
+    };
+
+    // Converter objeto para string para passar no onclick (truque simples)
+    const dadosJson = JSON.stringify(dadosPagamento).replace(/"/g, '&quot;');
+
+    let html = `
+        <div style="font-family:'Oswald',sans-serif; min-width:220px;">
+            <h3 style="margin:0; color:#232323;">${poi.AddressInfo.Title}</h3>
+            <p style="color:#666; font-size:0.9em;">${poi.AddressInfo.AddressLine1 || ''}</p>
+            
+            <div style="margin:10px 0; border-top:1px solid #ccc; padding-top:5px;">
+                 <div style="display:flex; justify-content:space-between;">
+                    <span>Carregamento (~${dadosPagamento.energy} kWh):</span>
+                    <b>${tempoCarga} min</b>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                    <span>Custo Estimado:</span>
+                    <b style="color:#4bc0c0; font-size:1.2em;">${custoEstimado}€</b>
+                </div>
+            </div>
+
+            <button onclick="abrirPagamento(${dadosJson})" 
+                style="width:100%; background:#4bc0c0; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:5px;">
+                RESERVAR AGORA
+            </button>
+        </div>
+    `;
+
+    L.popup({ offset: [0, -10] })
+        .setLatLng([lat, lng])
+        .setContent(html)
+        .openOn(map);
+}
+
+// --- FUNÇÕES DE PAGAMENTO (NOVO) ---
+
+window.abrirPagamento = function(dados) {
+    dadosTransacaoTemp = dados; // Guardar em memória
+    
+    // Tentar obter tempo de viagem da rota (se calculado), senão usa padrão
+    const tempoViagem = window.tempoEstimadoViagem ? window.tempoEstimadoViagem + ' min' : 'Calculando...';
+
+    // Preencher Modal
+    document.getElementById('pay-station-name').textContent = dados.stationName;
+    document.getElementById('pay-total').textContent = dados.total + '€';
+    document.getElementById('pay-energy').textContent = dados.energy + ' kWh';
+    document.getElementById('pay-time').textContent = tempoViagem;
+    
+    // Mostrar Modal
+    document.getElementById('payment-overlay').style.display = 'flex';
+    map.closePopup(); // Fechar o popup pequeno
+}
+
+window.fecharPagamento = function() {
+    document.getElementById('payment-overlay').style.display = 'none';
+}
+
+window.confirmarTransacao = async function() {
+    const btn = document.getElementById('confirm-pay-btn');
+    btn.textContent = "A Processar...";
+    btn.disabled = true;
+
     try {
-        const resp = await fetch('http://localhost:3000/api/iniciar', {
+        const response = await fetch('http://localhost:3000/api/confirmar-pagamento', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                email,
-                estacao_id: poi.ID,
-                carro_id: carroSelecionado.id,
-                lat: poi.AddressInfo.Latitude,
-                lon: poi.AddressInfo.Longitude,
-                endereco: poi.AddressInfo.AddressLine1
+                email: localStorage.getItem('email'),
+                estacao: dadosTransacaoTemp.stationName,
+                valor: parseFloat(dadosTransacaoTemp.total),
+                tempo_chegada: window.tempoEstimadoViagem ? window.tempoEstimadoViagem + ' min' : 'n/d',
+                kwh_estimado: dadosTransacaoTemp.energy
             })
         });
 
-        if (resp.ok) {
-            await verificarEstadoAtual();
-            map.closePopup();
-            const centro = { lat: 40.6782, lng: -73.9442 };
-            carregarEstacoes(centro);
+        const res = await response.json();
+
+        if (response.ok) {
+            alert(`✅ Reserva Confirmada!\nSaldo restante: ${res.novo_saldo.toFixed(2)}€\nGanhaste 50 Pontos!`);
+            fecharPagamento();
+            await carregarSaldo(); // Atualiza saldo na barra
         } else {
-            alert("Erro ao iniciar.");
+            alert("❌ Erro: " + res.error);
         }
     } catch (err) {
-        console.error(err);
+        alert("Erro de ligação ao servidor.");
+    } finally {
+        btn.textContent = "PAGAR E RESERVAR";
+        btn.disabled = false;
     }
 }
-
-async function iniciarCarregamentoReservado() {
-    const email = localStorage.getItem('email');
-    try {
-        const resp = await fetch('http://localhost:3000/api/iniciar-reserva', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
-        });
-
-        if (resp.ok) {
-            await verificarEstadoAtual();
-            map.closePopup();
-            const centro = { lat: 40.6782, lng: -73.9442 };
-            carregarEstacoes(centro);
-        }
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-async function cancelarReserva() {
-    const email = localStorage.getItem('email');
-    try {
-        const resp = await fetch('http://localhost:3000/api/cancelar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
-        });
-
-        if (resp.ok) {
-            await verificarEstadoAtual();
-            map.closePopup();
-            const centro = { lat: 40.6782, lng: -73.9442 };
-            carregarEstacoes(centro);
-        }
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-async function terminarCarregamento() {
-    const email = localStorage.getItem('email');
-    const valor = (Math.random() * 15 + 5).toFixed(2); 
-
-    try {
-        const resp = await fetch('http://localhost:3000/api/terminar', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, valor })
-        });
-
-        if (resp.ok) {
-            alert(`Carregamento terminado! Custo: ${valor}€`);
-            await carregarSaldo();
-            await verificarEstadoAtual();
-            map.closePopup();
-            const centro = { lat: 40.6782, lng: -73.9442 };
-            carregarEstacoes(centro);
-            document.getElementById('saldo-display').style.color = "#4bc0c0";
-        }
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-window.reservarEstacao = reservarEstacao;
-window.iniciarCarregamento = iniciarCarregamento;
-window.iniciarCarregamentoReservado = iniciarCarregamentoReservado;
-window.cancelarReserva = cancelarReserva;
-window.terminarCarregamento = terminarCarregamento;
-
-document.addEventListener('DOMContentLoaded', function () {
-  inicializar();
-});

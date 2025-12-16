@@ -7,7 +7,7 @@ const port = 3000;
 
 // --- CONFIGURAÇÃO DA IA ---
 // Confirma que a chave é do AI Studio: https://aistudio.google.com/app/apikey
-const GOOGLE_API_KEY = "AIzaSyCfRU64BtPjnSh6CVDyN4jKFEBmEz5aUeQ"; 
+const GOOGLE_API_KEY = "AIzaSyDBuFS2iujIr-P6ALX6CJ1RFc-Zx9upw5c"; 
 
 const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
 

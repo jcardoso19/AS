@@ -1,144 +1,58 @@
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
-const db = new sqlite3.Database('./db/users.db');
-
-function generateRandomHistory() {
-  // 12 valores aleatórios entre 20 e 100 (kWh)
-  return JSON.stringify(Array.from({length: 12}, () => Math.floor(Math.random() * 81) + 20));
-}
+const dbPath = path.resolve(__dirname, 'db/users.db');
+const db = new sqlite3.Database(dbPath);
 
 db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nome TEXT NOT NULL,
-      apelido TEXT NOT NULL,
-      data_nascimento TEXT NOT NULL,
-      genero TEXT NOT NULL,
-      cartao_cidadao TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      telefone TEXT NOT NULL,
-      morada TEXT NOT NULL,
-      pais TEXT NOT NULL,
-      cidade TEXT NOT NULL,
-      codigo_postal TEXT NOT NULL,
-      password TEXT NOT NULL,
-      is_admin INTEGER DEFAULT 0
-    )
-  `);
+  // 1. Utilizadores
+  db.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT, apelido TEXT, email TEXT UNIQUE, telefone TEXT,
+    morada TEXT, password TEXT, 
+    co2_saved REAL DEFAULT 0, points INTEGER DEFAULT 0
+  )`);
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS wallets (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER UNIQUE NOT NULL,
-      saldo REAL NOT NULL,
-      monthly_history TEXT NOT NULL,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-  `);
+  // 2. Carteira
+  db.run(`CREATE TABLE IF NOT EXISTS wallets (
+    user_id INTEGER PRIMARY KEY,
+    saldo REAL DEFAULT 0.00,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  )`);
 
-  // Insere admin se não existir
-  db.run(`
-    INSERT OR IGNORE INTO users 
-      (nome, apelido, data_nascimento, genero, cartao_cidadao, email, telefone, morada, pais, cidade, codigo_postal, password, is_admin)
-    VALUES 
-      ('Administrador', 'Admin', '1970-01-01', 'Outro', '00000000', 'admin@multipower.pt', '000000000', 'Admin Street', 'Portugal', 'Aveiro', '0000-000', 'admin123', 1)
-  `);
-  // Insere Cliente Padrão
-  db.run(`
-    INSERT OR IGNORE INTO users 
-      (nome, apelido, data_nascimento, genero, cartao_cidadao, email, telefone, morada, pais, cidade, codigo_postal, password, is_admin)
-    VALUES 
-      ('Cliente', 'Exemplo', '1990-01-01', 'Masculino', '11111111', 'cliente@multipower.pt', '910000000', 'Rua do Cliente', 'Portugal', 'Lisboa', '1000-000', '1234', 0)
-  `);
+  // 3. Carros
+  db.run(`CREATE TABLE IF NOT EXISTS cars (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    marca TEXT, modelo TEXT, ano TEXT, matricula TEXT, cor TEXT,
+    battery_size REAL DEFAULT 50.0, 
+    connection_type INTEGER DEFAULT 33, 
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  )`);
 
-  // Garante que o cliente tem carteira
+  // 4. HISTÓRICO DE TRANSAÇÕES (NOVO)
+  db.run(`CREATE TABLE IF NOT EXISTS transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    tipo TEXT, -- 'Reserva', 'Carregamento', 'Saldo'
+    estacao TEXT,
+    valor REAL,
+    data DATETIME DEFAULT CURRENT_TIMESTAMP,
+    detalhes TEXT,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  )`);
+
+  // Dados de Exemplo
+  db.run(`INSERT OR IGNORE INTO users (nome, email, password, co2_saved, points) VALUES ('Cliente', 'cliente@multipower.pt', '1234', 120.5, 500)`);
+  
   db.get("SELECT id FROM users WHERE email = 'cliente@multipower.pt'", (err, user) => {
-      if(user) {
-          db.run(`INSERT OR IGNORE INTO wallets (user_id, saldo, monthly_history) VALUES (?, ?, ?)`, 
-          [user.id, 50.00, generateRandomHistory()]);
-      }
-  });
-
-  // Cria carteiras para todos os utilizadores que ainda não têm
-  db.all(`SELECT id FROM users`, [], (err, users) => {
-    if (users && users.length > 0) {
-      let pending = users.length;
-      users.forEach(user => {
-        db.run(`
-          INSERT OR IGNORE INTO wallets (user_id, saldo, monthly_history)
-          VALUES (?, ?, ?)
-        `, [user.id, (Math.random() * 200).toFixed(2), generateRandomHistory()], () => {
-          pending--;
-          if (pending === 0) db.close();
-        });
-      });
-    } else {
-      db.close();
+    if(user) {
+      db.run(`INSERT OR IGNORE INTO wallets (user_id, saldo) VALUES (?, 50.00)`, [user.id]);
+      db.run(`INSERT INTO cars (user_id, marca, modelo, ano, matricula, cor, battery_size, connection_type) 
+              SELECT ?, 'Tesla', 'Model 3', '2023', 'AA-00-EV', 'Branco', 75.0, 33
+              WHERE NOT EXISTS (SELECT 1 FROM cars WHERE user_id = ?)`, [user.id, user.id]);
     }
   });
 
-  db.run(`
-    CREATE TABLE IF NOT EXISTS carros (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      marca TEXT NOT NULL,
-      modelo TEXT NOT NULL,
-      ano TEXT NOT NULL,
-      matricula TEXT NOT NULL,
-      cor TEXT NOT NULL,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS carro_estacao (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      carro_id INTEGER NOT NULL,
-      estacao_id TEXT NOT NULL,
-      status TEXT NOT NULL, -- 'reservado' ou 'iniciado'
-      data TEXT,
-      hora TEXT,
-      cheguei INTEGER DEFAULT 0,
-      lat REAL,
-      lon REAL,
-      endereco TEXT,
-      UNIQUE(carro_id)
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS manutencao (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      estacao_id TEXT NOT NULL,
-      data_inicio TEXT NOT NULL,
-      data_fim TEXT,
-      descricao TEXT,
-      admin_email TEXT NOT NULL,
-      UNIQUE(estacao_id)
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS estacao_ocupacao (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      estacao_id TEXT NOT NULL,
-      ocupados INTEGER DEFAULT 0,
-      ultima_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS estacoes_locais (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      estacao_id TEXT UNIQUE NOT NULL,
-      nome_estacao TEXT NOT NULL,
-      nome_rua TEXT NOT NULL,
-      numero_lugares INTEGER NOT NULL,
-      latitude REAL NOT NULL,
-      longitude REAL NOT NULL,
-      data_criacao TEXT NOT NULL,
-      admin_email TEXT NOT NULL
-    )
-  `);
+  console.log("Base de dados recriada com tabela de Transações!");
 });
