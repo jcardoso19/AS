@@ -8,7 +8,8 @@ let estacaoParaReserva = null;
 let tempoViagemMinutos = 0;
 let chartInstance = null;
 let metodoPagamentoSelecionado = 'app';
-let minhasReservas = []; // <--- NOVA LISTA PARA GUARDAR RESERVAS
+let minhasReservas = []; 
+let coordenadasReservaAtiva = null;
 
 // --- A TUA LOCALIZAÇÃO FIXA (GPS FALSO) ---
 const MY_LAT = 40.6700; 
@@ -23,8 +24,8 @@ window.onload = async function() {
         container._leaflet_id = null;
     }
 
-    // 2. Inicializar Mapa (CENTRADO NA TUA POSIÇÃO)
-    map = L.map('map', { zoomControl: false }).setView([MY_LAT, MY_LNG], 15);
+    // 2. Inicializar Mapa
+    map = L.map('map', { zoomControl: false }).setView([MY_LAT, MY_LNG], 14);
     
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; OpenStreetMap &copy; CARTO',
@@ -34,7 +35,24 @@ window.onload = async function() {
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // --- CRIAR O PONTO "EU" ---
+    // --- NOVA FUNCIONALIDADE: CARREGAR AO MOVER ---
+    // Sempre que o utilizador parar de mexer o mapa, carregamos novas estações
+    map.on('moveend', function() {
+        const centro = map.getCenter();
+        // Carrega estações num raio de 10km do novo centro
+        carregarEstacoes({ lat: centro.lat, lng: centro.lng });
+    });
+
+    // --- EVENTO: LIMPAR ROTA AO FECHAR POPUP ---
+    map.on('popupclose', function(e) {
+        if (coordenadasReservaAtiva) {
+            desenharRota(coordenadasReservaAtiva.lat, coordenadasReservaAtiva.lng);
+        } else {
+            if(control) control.setWaypoints([]);
+        }
+    });
+
+    // --- PONTO "EU" ---
     const userIcon = L.divIcon({
         className: 'user-pin-marker', 
         html: `<div class="pulsing-dot"></div>`,
@@ -44,32 +62,29 @@ window.onload = async function() {
 
     L.marker([MY_LAT, MY_LNG], {icon: userIcon, zIndexOffset: 1000})
      .addTo(map)
-     .bindPopup("<b>📍 Você está aqui</b>")
-     .openPopup();
+     .bindPopup("<b>📍 Você está aqui</b>");
 
-    // 3. Inicializar Routing (GPS)
+    // 3. Inicializar Routing
     if (typeof L.Routing !== 'undefined') {
         control = L.Routing.control({
             waypoints: [],
             routeWhileDragging: false,
-            lineOptions: { styles: [{ color: '#3498db', opacity: 0.9, weight: 6 }] }, // Linha azul
-            createMarker: function() { return null; }, // Não criar pinos extra na rota
+            lineOptions: { styles: [{ color: '#3498db', opacity: 0.9, weight: 6 }] },
+            createMarker: function() { return null; },
             show: false, 
             addWaypoints: false
         }).addTo(map);
     }
 
-    // 4. Carregar Dados
+    // 4. Carregar Dados Iniciais
     localStorage.setItem('email', 'cliente@multipower.pt');
     
-    // Carregar estações (algumas perto de ti)
-    adicionarEstacoesTeste(); 
-
     await carregarCarros();
     await carregarSaldo();
-    await carregarMinhasReservas(); // <--- CARREGAR RESERVAS DO SERVIDOR
+    await carregarMinhasReservas();
     
-    // Tenta carregar API real
+    // Carrega pontos iniciais
+    adicionarEstacoesTeste(); 
     carregarEstacoes({ lat: MY_LAT, lng: MY_LNG });
     
     // Listeners
@@ -81,17 +96,33 @@ window.onload = async function() {
     }
 };
 
-// --- NOVA FUNÇÃO: CARREGAR RESERVAS ATIVAS ---
+// --- FUNÇÃO DE ROTA ---
+function desenharRota(destLat, destLng) {
+    if (control) {
+        control.setWaypoints([
+            L.latLng(MY_LAT, MY_LNG),
+            L.latLng(destLat, destLng)
+        ]);
+        
+        control.on('routesfound', function(e) {
+            if(e.routes && e.routes[0]) {
+                tempoViagemMinutos = Math.round(e.routes[0].summary.totalTime / 60);
+                const el = document.getElementById('popup-tempo');
+                if(el) el.textContent = tempoViagemMinutos + " min";
+                const elPay = document.getElementById('pay-time');
+                if(elPay) elPay.textContent = tempoViagemMinutos + " min";
+            }
+        });
+    }
+}
+
 async function carregarMinhasReservas() {
     try {
         const email = localStorage.getItem('email');
         const res = await fetch(`http://localhost:3000/api/transacoes/${email}`);
         const transacoes = await res.json();
-        
-        // Filtra apenas as reservas que NÃO foram canceladas
         minhasReservas = transacoes.filter(t => t.tipo === 'Reserva' && !t.detalhes.includes('[CANCELADO]'));
-        console.log("Reservas ativas:", minhasReservas);
-    } catch(e) { console.error("Erro ao carregar reservas:", e); }
+    } catch(e) { console.error("Erro reservas:", e); }
 }
 
 function adicionarEstacoesTeste() {
@@ -109,7 +140,6 @@ function adicionarEstacoesTeste() {
     });
 }
 
-// ... (Funções carregarCarros, carregarSaldo, carregarEstacoes mantêm-se iguais) ...
 async function carregarCarros() {
     try {
         const resp = await fetch(`http://localhost:3000/api/carros/${localStorage.getItem('email')}`);
@@ -136,12 +166,16 @@ async function carregarSaldo() {
     } catch(e) {}
 }
 
+// --- CARREGAR ESTAÇÕES DA API ---
 async function carregarEstacoes(centro) {
     try {
-        const response = await fetch(`https://api.openchargemap.io/v3/poi/?output=json&countrycode=US&latitude=${centro.lat}&longitude=${centro.lng}&maxresults=20&distance=5&compact=true&verbose=false&key=1b6229d7-8a8d-4e66-9d0f-2e101e00f789`);
+        // Aumentei a distância para 10km e o limite para 50 estações
+        const response = await fetch(`https://api.openchargemap.io/v3/poi/?output=json&countrycode=US&latitude=${centro.lat}&longitude=${centro.lng}&maxresults=50&distance=10&compact=true&verbose=false&key=1b6229d7-8a8d-4e66-9d0f-2e101e00f789`);
         const data = await response.json();
+        
+        // Adiciona novos marcadores ao mapa
         data.forEach(poi => adicionarMarcador(poi));
-    } catch (e) {}
+    } catch (e) { console.log("Erro API:", e); }
 }
 
 function adicionarMarcador(poi) {
@@ -149,10 +183,16 @@ function adicionarMarcador(poi) {
     const lat = poi.AddressInfo.Latitude;
     const lon = poi.AddressInfo.Longitude;
     
-    // Verifica se esta estação já está reservada por nós para mudar a cor do pino
+    // Verifica reserva
     const jaReservado = minhasReservas.some(r => r.estacao === poi.AddressInfo.Title);
     
-    let cor = jaReservado ? '#e74c3c' : '#2ecc71'; // Vermelho se reservado, Verde se livre
+    // Guarda coordenadas se for a nossa reserva ativa
+    if (jaReservado) {
+        coordenadasReservaAtiva = { lat: lat, lng: lon };
+        setTimeout(() => desenharRota(lat, lon), 1000); 
+    }
+    
+    let cor = jaReservado ? '#e74c3c' : '#2ecc71'; 
     
     const icon = L.divIcon({
         className: 'custom-div-icon',
@@ -164,53 +204,35 @@ function adicionarMarcador(poi) {
     const marker = L.marker([lat, lon], { icon: icon }).addTo(map);
 
     marker.on('click', () => {
-        // Se já estiver reservado, não recalcula rota, só mostra popup de cancelamento
-        if (!jaReservado && control) {
-             control.setWaypoints([
-                 L.latLng(MY_LAT, MY_LNG),
-                 L.latLng(lat, lon)
-             ]);
-             control.on('routesfound', function(e) {
-                if(e.routes && e.routes[0]) {
-                    tempoViagemMinutos = Math.round(e.routes[0].summary.totalTime / 60);
-                    const el = document.getElementById('popup-tempo');
-                    if(el) el.textContent = tempoViagemMinutos + " min";
-                }
-             });
-        }
+        // Ao clicar, desenha rota temporária
+        desenharRota(lat, lon);
         mostrarPopup(poi);
     });
 }
 
-// --- FUNÇÃO MOSTRAR POPUP (Lógica Inteligente) ---
 function mostrarPopup(poi) {
     const lat = poi.AddressInfo.Latitude;
     const lng = poi.AddressInfo.Longitude;
     const nomeEstacao = poi.AddressInfo.Title;
     
-    // Verificar se existe reserva ativa para esta estação
     const reservaAtiva = minhasReservas.find(r => r.estacao === nomeEstacao);
-
     let html = '';
 
     if (reservaAtiva) {
-        // === MODO CANCELAMENTO ===
         html = `
             <div style="font-family:'Oswald',sans-serif; text-align:center; min-width:200px;">
                 <h3 style="margin:0; color:#333;">${nomeEstacao}</h3>
                 <div style="background:#fff3cd; color:#856404; padding:5px; border-radius:5px; margin:10px 0; font-size:0.9em;">
                     ⚠️ Reserva Ativa
                 </div>
-                <p style="font-size:0.8em; color:#666;">Valor Pago: <b>${Math.abs(reservaAtiva.valor).toFixed(2)}€</b></p>
-                
+                <p style="font-size:0.8em; color:#666;">Tempo: <b>${tempoViagemMinutos} min</b></p>
                 <button onclick="cancelarReservaDoMapa(${reservaAtiva.id})" 
                     style="width:100%; background:#e74c3c; color:white; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">
-                    CANCELAR RESERVA
+                    CANCELAR
                 </button>
             </div>
         `;
     } else {
-        // === MODO RESERVA (NORMAL) ===
         const precoKwh = 0.45;
         const bateria = carroSelecionado ? (carroSelecionado.battery_size || 50) : 50;
         const energia = (bateria * 0.60).toFixed(1);
@@ -229,7 +251,7 @@ function mostrarPopup(poi) {
         html = `
             <div style="font-family:'Oswald',sans-serif; text-align:center; min-width:200px;">
                 <h3 style="margin:0; color:#333;">${nomeEstacao}</h3>
-                <p style="margin:5px 0; color:#666; font-size:0.8em;">Tempo de viagem: <b id="popup-tempo" style="color:#3498db">Calculando...</b></p>
+                <p style="margin:5px 0; color:#666; font-size:0.8em;">Viagem: <b id="popup-tempo">...</b></p>
                 <div style="margin:10px 0; font-size:1.4em; color:#2ecc71; font-weight:bold;">${custo}€</div>
                 <button onclick="abrirPagamento()" 
                     style="width:100%; background:#2ecc71; color:white; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">
@@ -245,41 +267,35 @@ function mostrarPopup(poi) {
         .openOn(map);
 }
 
-// --- CANCELAR DIRETAMENTE DO MAPA ---
+// --- FUNÇÕES GLOBAIS ---
+
 window.cancelarReservaDoMapa = async function(id) {
-    if(!confirm("Cancelar esta reserva agora?\nSerá cobrada a taxa de 1.50€.")) return;
+    if(!confirm("Cancelar reserva? Taxa: 1.50€")) return;
 
     try {
         const response = await fetch('http://localhost:3000/api/cancelar-transacao', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                id: id, 
-                user_email: localStorage.getItem('email') 
-            })
+            body: JSON.stringify({ id: id, user_email: localStorage.getItem('email') })
         });
-
         const res = await response.json();
-
         if (response.ok) {
-            alert(`✅ Reserva Cancelada.\nReembolso: ${res.reembolso.toFixed(2)}€`);
+            alert(`✅ Cancelado. Reembolso: ${res.reembolso.toFixed(2)}€`);
             map.closePopup();
             
-            // Recarregar tudo para atualizar os pinos
+            // LIMPAR ROTA E RESERVA ATIVA
+            coordenadasReservaAtiva = null; 
+            control.setWaypoints([]); 
+            
             await carregarSaldo();
             await carregarMinhasReservas();
-            
-            // Força refresh dos pinos (limpa e desenha de novo é a forma mais fácil sem lógica complexa)
             location.reload(); 
         } else {
             alert("Erro: " + res.error);
         }
-    } catch(e) {
-        alert("Erro de ligação.");
-    }
+    } catch(e) { alert("Erro de ligação."); }
 }
 
-// --- UI / PAGAMENTO ---
 window.abrirPagamento = function() {
     if (!estacaoParaReserva) return;
     document.getElementById('pay-station-name').textContent = estacaoParaReserva.stationName;
@@ -287,8 +303,7 @@ window.abrirPagamento = function() {
     document.getElementById('pay-total').textContent = estacaoParaReserva.total + '€';
     document.getElementById('pay-energy').textContent = estacaoParaReserva.energy + ' kWh';
     document.getElementById('pay-kwh-price').textContent = estacaoParaReserva.kwhPrice + '€';
-    const t = tempoViagemMinutos > 0 ? tempoViagemMinutos + ' min' : '15 min';
-    document.getElementById('pay-time').textContent = t;
+    document.getElementById('pay-time').textContent = tempoViagemMinutos + ' min';
     document.getElementById('payment-overlay').classList.add('active');
     map.closePopup();
     if (typeof Chart !== 'undefined') renderChart();
@@ -296,6 +311,9 @@ window.abrirPagamento = function() {
 
 window.fecharPagamento = function() {
     document.getElementById('payment-overlay').classList.remove('active');
+    if(!coordenadasReservaAtiva) {
+        control.setWaypoints([]);
+    }
 }
 
 window.selectPayment = function(el, method) {
@@ -317,7 +335,7 @@ window.confirmarTransacao = async function() {
                 email: localStorage.getItem('email'),
                 estacao: estacaoParaReserva.stationName,
                 valor: parseFloat(estacaoParaReserva.total),
-                tempo_chegada: document.getElementById('pay-time').textContent,
+                tempo_chegada: tempoViagemMinutos + ' min',
                 kwh_estimado: estacaoParaReserva.energy,
                 metodo: metodoPagamentoSelecionado
             })
@@ -326,25 +344,15 @@ window.confirmarTransacao = async function() {
         const res = await response.json();
 
         if (response.ok) {
-            let msg = `✅ Reserva Confirmada!`;
-            if (metodoPagamentoSelecionado === 'app') msg += `\nSaldo restante: ${res.novo_saldo.toFixed(2)}€`;
-            else msg += `\nPagamento via ${metodoPagamentoSelecionado.toUpperCase()} aceite.`;
-            
-            alert(msg);
+            alert(`✅ Confirmado!`);
             fecharPagamento();
-            
-            // ATUALIZAR ESTADO GERAL APÓS RESERVA
             await carregarSaldo(); 
-            await carregarMinhasReservas();
-            // Recarregar a página para pintar o pino de vermelho
-            location.reload();
-
+            location.reload(); 
         } else {
-            alert("❌ Erro: " + (res.error || "Falha ao processar"));
+            alert("❌ Erro: " + res.error);
         }
     } catch (err) {
-        console.error(err);
-        alert("Erro de ligação ao servidor.");
+        alert("Erro de ligação.");
     } finally {
         btn.textContent = "RESERVAR ➔";
         btn.disabled = false;
