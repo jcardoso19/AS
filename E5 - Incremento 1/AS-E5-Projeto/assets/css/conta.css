@@ -204,3 +204,49 @@ input:focus, select:focus { border-color: #4bc0c0; background: #333; }
 }
 .navbar img { width: 24px; height: 24px; margin-bottom: 4px; filter: invert(0.6); }
 .nav1 { font-size: 0.7em; letter-spacing: 1px; }
+
+/* --- HISTÓRICO DE TRANSAÇÕES --- */
+.trans-item {
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #333;
+}
+
+.trans-info { flex: 1; }
+.trans-title { font-weight: bold; color: #fff; font-size: 1em; margin-bottom: 4px; }
+.trans-date { color: #888; font-size: 0.8em; }
+
+.trans-actions {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.trans-price { font-weight: bold; font-size: 1.1em; }
+.text-green { color: #2ecc71; } /* Cor de reembolso */
+.text-red { color: #e74c3c; }   /* Cor de gasto */
+
+/* Botão de Cancelar Pequeno */
+.btn-cancel-mini {
+    background: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.75em;
+    cursor: pointer;
+    font-family: 'Oswald', sans-serif;
+    transition: all 0.2s;
+}
+
+.btn-cancel-mini:hover {
+    background: #e74c3c;
+    color: #fff;
+}

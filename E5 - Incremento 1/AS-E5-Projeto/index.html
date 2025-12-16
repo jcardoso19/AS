@@ -6,9 +6,15 @@
   <title>MultiPower</title>
   
   <link rel="stylesheet" href="assets/css/index.css" />
+  
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script src="assets/js/index.js" defer></script>
 </head>
@@ -18,9 +24,7 @@
     <div class="map-card">
       <div class="top-bar">
         <img src="assets/images/car_electric.png" alt="Carro">
-        <select id="car-select">
-            <option value="" disabled selected>Carregando...</option>
-        </select>
+        <select id="car-select"><option>Carregando...</option></select>
         <img src="assets/images/wallet.png" alt="Carteira" style="margin-left: 10px;">
         <span id="saldo-display" class="saldo-text">--€</span>
       </div>
@@ -28,78 +32,47 @@
     </div>
   </div>
 
-  <div id="payment-overlay" class="payment-overlay" style="display:none;">
+  <div id="payment-overlay" class="payment-overlay">
       <div class="payment-card">
           <div class="payment-header">
-              <h2>Confirmar Reserva</h2>
+              <div>
+                  <h2 id="pay-station-name">Estação</h2>
+                  <span id="pay-address" style="font-size:0.8em; color:#888;">...</span>
+              </div>
               <button onclick="fecharPagamento()" class="close-btn">✕</button>
           </div>
 
-          <div class="payment-summary">
-              <div class="summary-row">
-                  <span>📍 Destino:</span>
-                  <b id="pay-station-name">Estação Exemplo</b>
-              </div>
-              <div class="summary-row">
-                  <span>⏱️ Chegada Estimada:</span>
-                  <b id="pay-time">-- min</b>
-              </div>
-              <div class="summary-row">
-                  <span>⚡ Energia Est.:</span>
-                  <b id="pay-energy">-- kWh</b>
-              </div>
+          <div class="chart-container">
+              <canvas id="energyChart"></canvas>
+          </div>
+          <p style="text-align:center; font-size:0.7em; color:#666;">Preço da energia (24h)</p>
+
+          <div class="details-grid">
+              <div class="detail-box"><span class="detail-label">Chegada</span><span class="detail-val" id="pay-time">--</span></div>
+              <div class="detail-box"><span class="detail-label">Carga</span><span class="detail-val" id="pay-energy">--</span></div>
+              <div class="detail-box"><span class="detail-label">Tarifa</span><span class="detail-val" id="pay-kwh-price">--</span></div>
           </div>
 
-          <hr style="border:0; border-top:1px solid #444; margin: 15px 0;">
-
-          <label style="color:#888; font-size:0.9em;">Método de Pagamento</label>
-          <select id="payment-method" style="margin-top:5px; margin-bottom:20px;">
-              <option value="app">Carteira MultiPower (Saldo)</option>
-              <option value="mbway">MB WAY (Indisponível)</option>
-              <option value="card">Cartão de Crédito (Indisponível)</option>
-          </select>
-
-          <div class="total-row">
-              <span>Total a Pagar:</span>
-              <span id="pay-total" class="total-price">0.00€</span>
+          <div class="payment-methods">
+              <div class="pm-option active" onclick="selectPayment(this, 'app')"><span>💰</span> Saldo</div>
+              <div class="pm-option" onclick="selectPayment(this, 'mbway')"><span>📱</span> MB WAY</div>
+              <div class="pm-option" onclick="selectPayment(this, 'paypal')"><span>🅿️</span> PayPal</div>
+              <div class="pm-option" onclick="selectPayment(this, 'apple')"><span></span> Apple Pay</div>
           </div>
 
-          <button id="confirm-pay-btn" onclick="confirmarTransacao()" class="btn-confirm">
-              PAGAR E RESERVAR
-          </button>
+          <div class="action-area">
+              <div><span style="font-size:0.8em; color:#aaa;">Total</span><br><span id="pay-total" class="final-price">0.00€</span></div>
+              <button id="confirm-pay-btn" onclick="confirmarTransacao()" class="btn-confirm">RESERVAR ➔</button>
+          </div>
       </div>
   </div>
 
   <div class="navbar">
-    <div class="navigation">
-      <a class="button" href="index.html" style="color: #4bc0c0;">
-        <img src="assets/images/map.png" alt="Mapa" style="filter: invert(0.8) sepia(1) saturate(3) hue-rotate(120deg);" />
-        <div class="nav1">MAPA</div>
-      </a>
-    </div>
-    <div class="navigation">
-      <a class="button" href="wallet.html">
-        <img src="assets/images/wallet.png" alt="Carteira" />
-        <div class="nav1">WALLET</div>
-      </a>
-    </div>
-    <div class="navigation">
-        <a class="button" href="chat.html">
-            <img src="assets/images/elon.png" alt="Chat" />
-            <div class="nav1">CHAT</div>
-        </a>
-    </div>
-    <div class="navigation">
-      <a class="button" href="conta.html">
-        <img src="assets/images/conta.png" alt="Conta" />
-        <div class="nav1">CONTA</div>
-      </a>
-    </div>
+    <div class="navigation"><a class="button" href="index.html" style="color:#4bc0c0;"><img src="assets/images/map.png"><div class="nav1">MAPA</div></a></div>
+    <div class="navigation"><a class="button" href="wallet.html"><img src="assets/images/wallet.png"><div class="nav1">WALLET</div></a></div>
+    <div class="navigation"><a class="button" href="chat.html"><img src="assets/images/elon.png"><div class="nav1">CHAT</div></a></div>
+    <div class="navigation"><a class="button" href="conta.html"><img src="assets/images/conta.png"><div class="nav1">CONTA</div></a></div>
   </div>
-
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
 </body>
 </html>
