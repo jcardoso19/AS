@@ -3,12 +3,55 @@ const router = express.Router();
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
+// --- NOVO: Configuração do Gemini AI ---
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// ATENÇÃO: Substitui "A_TUA_API_KEY_DO_GEMINI" pela tua chave real
+// Podes obter uma em: https://aistudio.google.com/app/apikey
+const API_KEY = process.env.GEMINI_API_KEY || "AIzaSyBSLRJvDwLpAyfu3leyIVoXdXvqMczX0a4"; 
+const genAI = new GoogleGenerativeAI(API_KEY);
+// --------------------------------------
+
 const dbPath = path.resolve(__dirname, '../db/users.db');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) console.error("Erro ao ligar à BD:", err.message);
 });
 
-// --- ROTA DE CANCELAMENTO (NOVA) ---
+// --- ROTA DE CHAT (GEMINI AI) ---
+router.post('/chat', async (req, res) => {
+    try {
+        const { message } = req.body;
+        
+        // CORREÇÃO: Usar 'gemini-1.5-flash' em vez de 'gemini-pro'
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+        // Prompt de sistema para ele se comportar como assistente da MultiPower
+        const prompt = `
+            És o assistente virtual da aplicação MultiPower, uma app de gestão de carregamento de carros elétricos.
+            O teu tom é prestável, curto e focado em energia sustentável.
+            
+            O utilizador disse: "${message}"
+            
+            Responde de forma concisa (máximo 2 frases).
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        res.json({ reply: text });
+    } catch (error) {
+        console.error("Erro Gemini:", error);
+        // Retorna 503 se estiver sobrecarregado, ou 500 para outros erros
+        if (error.message && error.message.includes('503')) {
+            res.status(503).json({ error: "Serviço temporariamente indisponível" });
+        } else {
+            res.status(500).json({ error: "Erro interno no assistente" });
+        }
+    }
+});
+
+// --- ROTA DE CANCELAMENTO ---
 router.post('/cancelar-transacao', (req, res) => {
     const { id, user_email } = req.body;
     const TAXA_CANCELAMENTO = 1.50;
@@ -16,11 +59,9 @@ router.post('/cancelar-transacao', (req, res) => {
     db.get("SELECT id FROM users WHERE email = ?", [user_email], (err, user) => {
         if (!user) return res.status(404).json({ error: "User not found" });
 
-        // 1. Procurar a transação original
         db.get("SELECT * FROM transactions WHERE id = ? AND user_id = ?", [id, user.id], (err, transacao) => {
             if (!transacao) return res.status(404).json({ error: "Transação não encontrada." });
             
-            // Verificar se já foi cancelada ou se não é reserva
             if (transacao.detalhes.includes("[CANCELADO]")) {
                 return res.status(400).json({ error: "Esta reserva já foi cancelada." });
             }
@@ -28,32 +69,26 @@ router.post('/cancelar-transacao', (req, res) => {
                 return res.status(400).json({ error: "Apenas reservas podem ser canceladas." });
             }
 
-            // 2. Calcular Reembolso
-            const valorOriginal = transacao.valor;
+            const valorOriginal = Math.abs(transacao.valor); // Garante valor positivo
             const valorReembolso = valorOriginal - TAXA_CANCELAMENTO;
 
             if (valorReembolso < 0) {
-                return res.status(400).json({ error: "O valor é demasiado baixo para reembolsar após a taxa." });
+                return res.status(400).json({ error: "O valor é demasiado baixo para reembolsar." });
             }
 
-            // 3. Atualizar Saldo (Devolve para a Wallet)
+            // Atualizar Saldo
             db.run("UPDATE wallets SET saldo = saldo + ? WHERE user_id = ?", [valorReembolso, user.id], (err) => {
                 if(err) return res.status(500).json({error: err.message});
 
-                // 4. Marcar original como cancelada
+                // Marcar como cancelada
                 const novoDetalhe = transacao.detalhes + " [CANCELADO]";
                 db.run("UPDATE transactions SET detalhes = ? WHERE id = ?", [novoDetalhe, id]);
 
-                // 5. Criar registo de Reembolso no histórico
+                // Registar Reembolso
                 const sqlReembolso = `INSERT INTO transactions (user_id, tipo, estacao, valor, detalhes) VALUES (?, ?, ?, ?, ?)`;
                 const detalheReembolso = `Reembolso de reserva (Taxa ${TAXA_CANCELAMENTO.toFixed(2)}€)`;
                 
-                // Nota: O valor entra como negativo na visualização de "gasto", mas aqui queremos mostrar que entrou dinheiro.
-                // Na lógica de visualização, se for 'Reembolso', vamos pintar de verde.
-                // Na tabela transactions, guardamos o valor absoluto ou negativo dependendo da logica. 
-                // Vamos guardar como 0 ou negativo para não somar aos gastos, mas visualmente tratamos no JS.
-                
-                db.run(sqlReembolso, [user.id, 'Reembolso', transacao.estacao, -valorReembolso, detalheReembolso], function(err) {
+                db.run(sqlReembolso, [user.id, 'Reembolso', transacao.estacao, valorReembolso, detalheReembolso], function(err) {
                     res.json({ success: true, reembolso: valorReembolso });
                 });
             });
@@ -61,8 +96,48 @@ router.post('/cancelar-transacao', (req, res) => {
     });
 });
 
-// --- OUTRAS ROTAS EXISTENTES (MANTIDAS) ---
+// --- ROTA DE PAGAMENTO ---
+router.post('/confirmar-pagamento', (req, res) => {
+    const { email, estacao, valor, tempo_chegada, kwh_estimado, metodo } = req.body;
 
+    db.get("SELECT id FROM users WHERE email = ?", [email], (err, user) => {
+        if (!user) return res.status(404).json({ error: "Utilizador não encontrado" });
+
+        const finalizarReserva = (saldoAtual) => {
+            const nomeMetodo = metodo === 'app' ? 'Carteira' : metodo.toUpperCase();
+            const detalhes = `${kwh_estimado} kWh • ${nomeMetodo}`;
+            
+            const sqlTrans = `INSERT INTO transactions (user_id, tipo, estacao, valor, detalhes) VALUES (?, ?, ?, ?, ?)`;
+            
+            // Valor negativo para representar gasto
+            db.run(sqlTrans, [user.id, 'Reserva', estacao, -valor, detalhes], function(err) {
+                if (err) console.error("Erro histórico:", err);
+                
+                db.run("UPDATE users SET points = points + 50, co2_saved = co2_saved + 2.5 WHERE id = ?", [user.id]);
+                res.json({ success: true, novo_saldo: saldoAtual });
+            });
+        };
+
+        if (metodo === 'app') {
+            db.get("SELECT saldo FROM wallets WHERE user_id = ?", [user.id], (err, wallet) => {
+                if (!wallet || wallet.saldo < valor) {
+                    return res.status(400).json({ error: "Saldo insuficiente na App." });
+                }
+                
+                db.run("UPDATE wallets SET saldo = saldo - ? WHERE user_id = ?", [valor, user.id], (err) => {
+                    if (err) return res.status(500).json({ error: err.message });
+                    finalizarReserva(wallet.saldo - valor);
+                });
+            });
+        } else {
+            db.get("SELECT saldo FROM wallets WHERE user_id = ?", [user.id], (err, wallet) => {
+                finalizarReserva(wallet ? wallet.saldo : 0);
+            });
+        }
+    });
+});
+
+// --- ROTAS GERAIS ---
 router.post('/adicionar-carro', (req, res) => {
     const { email, marca, modelo, ano, matricula, cor, battery_size, connection_type } = req.body;
     db.get("SELECT id FROM users WHERE email = ?", [email], (err, user) => {
@@ -85,53 +160,6 @@ router.get('/carros/:email', (req, res) => {
 
 router.post('/remover-carro', (req, res) => {
     db.run("DELETE FROM cars WHERE id = ?", [req.body.id], (err) => res.json({ success: true }));
-});
-
-// --- ROTA DE PAGAMENTO E RESERVA ---
-router.post('/confirmar-pagamento', (req, res) => {
-    const { email, estacao, valor, tempo_chegada, kwh_estimado, metodo } = req.body; // Recebe o método
-
-    db.get("SELECT id FROM users WHERE email = ?", [email], (err, user) => {
-        if (!user) return res.status(404).json({ error: "Utilizador não encontrado" });
-
-        // Função auxiliar para gravar histórico e finalizar
-        const finalizarReserva = (saldoAtual) => {
-            // Adiciona o método de pagamento aos detalhes
-            const nomeMetodo = metodo === 'app' ? 'Carteira' : metodo.toUpperCase();
-            const detalhes = `${kwh_estimado} kWh • ${nomeMetodo}`;
-            
-            const sqlTrans = `INSERT INTO transactions (user_id, tipo, estacao, valor, detalhes) VALUES (?, ?, ?, ?, ?)`;
-            
-            db.run(sqlTrans, [user.id, 'Reserva', estacao, valor, detalhes], function(err) {
-                if (err) console.error("Erro histórico:", err);
-                
-                // Dar pontos pela reserva
-                db.run("UPDATE users SET points = points + 50, co2_saved = co2_saved + 2.5 WHERE id = ?", [user.id]);
-                
-                res.json({ success: true, novo_saldo: saldoAtual });
-            });
-        };
-
-        // LÓGICA DE PAGAMENTO
-        if (metodo === 'app') {
-            // Se for pela APP, verifica e desconta saldo
-            db.get("SELECT saldo FROM wallets WHERE user_id = ?", [user.id], (err, wallet) => {
-                if (!wallet || wallet.saldo < valor) {
-                    return res.status(400).json({ error: "Saldo insuficiente na App." });
-                }
-                
-                db.run("UPDATE wallets SET saldo = saldo - ? WHERE user_id = ?", [valor, user.id], (err) => {
-                    if (err) return res.status(500).json({ error: err.message });
-                    finalizarReserva(wallet.saldo - valor); // Envia saldo atualizado
-                });
-            });
-        } else {
-            // Se for MB WAY, PayPal, etc., assumimos sucesso externo e não mexemos no saldo da wallet
-            db.get("SELECT saldo FROM wallets WHERE user_id = ?", [user.id], (err, wallet) => {
-                finalizarReserva(wallet ? wallet.saldo : 0); // Mantém o saldo igual
-            });
-        }
-    });
 });
 
 router.get('/transacoes/:email', (req, res) => {
