@@ -32,7 +32,6 @@
         <span class="section-title">Minha Garagem</span>
         <button onclick="openAddCar()" class="btn-mini-add">+ Adicionar</button>
     </div>
-    
     <div id="garage-list">
         <p style="text-align:center; color:#666; margin-top:20px;">A carregar garagem...</p>
     </div>
@@ -51,7 +50,7 @@
             <span>Dados Pessoais</span>
             <span class="menu-arrow">›</span>
         </div>
-        <div class="menu-item" style="color: #e74c3c;">
+        <div class="menu-item" style="color: #e74c3c;" onclick="location.href='login.html'">
             <span class="menu-icon">🚪</span>
             <span>Terminar Sessão</span>
         </div>
@@ -73,7 +72,6 @@
                     <input type="text" name="modelo" placeholder="Model 3" required>
                 </div>
             </div>
-            
             <div style="display: flex; gap: 10px;">
                 <div class="form-group" style="flex:1;">
                     <label class="form-label">Ano</label>
@@ -84,7 +82,6 @@
                     <input type="text" name="matricula" placeholder="AA-00-AA" required>
                 </div>
             </div>
-
             <div style="display: flex; gap: 10px;">
                 <div class="form-group" style="flex:1;">
                     <label class="form-label">Bateria (kWh)</label>
@@ -99,12 +96,6 @@
                     </select>
                 </div>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">Cor</label>
-                <input type="text" name="cor" placeholder="Ex: Branco">
-            </div>
-
             <button type="submit" class="btn-primary">Guardar na Garagem</button>
         </form>
     </div>
@@ -128,10 +119,6 @@
                 <label class="form-label">Telefone</label>
                 <input type="tel" name="telefone" id="edit-phone">
             </div>
-            <div class="form-group">
-                <label class="form-label">Morada</label>
-                <input type="text" name="morada" id="edit-address">
-            </div>
             <button type="submit" class="btn-primary">Atualizar Dados</button>
         </form>
     </div>
@@ -139,6 +126,12 @@
     <div class="navbar">
         <div class="navigation">
             <a class="button" href="index.html">
+                <span class="nav-icon" style="font-size:20px; filter: invert(0.4);">🏠</span>
+                <div class="nav1">INÍCIO</div>
+            </a>
+        </div>
+        <div class="navigation">
+            <a class="button" href="mapa.html">
                 <img src="assets/images/map.png" alt="Mapa">
                 <div class="nav1">MAPA</div>
             </a>
@@ -156,7 +149,7 @@
             </a>
         </div>
         <div class="navigation">
-            <a class="button" href="conta.html" style="color: #4bc0c0;">
+            <a class="button active" href="conta.html" style="color:#4bc0c0;">
                 <img src="assets/images/conta.png" alt="Conta" style="filter: invert(0.8) sepia(1) saturate(3) hue-rotate(120deg);">
                 <div class="nav1">CONTA</div>
             </a>
