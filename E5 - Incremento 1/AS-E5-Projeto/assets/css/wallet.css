@@ -1,78 +1,148 @@
 /* --- RESET GLOBAL --- */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-@import url('https://fonts.googleapis.com/css?family=Oswald:400');
+@import url('https://fonts.googleapis.com/css?family=Oswald:400,500');
 
 body {
     margin: 0; padding: 0;
-    background: #181818;
+    /* Fundo claro igual à página do Mapa */
+    background: #f0f2f5;
     font-family: 'Oswald', sans-serif;
     min-height: 100vh;
-    /* Importante para o scroll funcionar bem */
     display: block; 
-    padding-bottom: 80px; /* Espaço para a navbar não tapar o fim da página */
+    padding-bottom: 80px; /* Espaço para a navbar */
 }
 
 /* --- BOTTOM NAVBAR --- */
 .navbar {
     position: fixed; bottom: 0; left: 0;
     width: 100%; height: 70px;
-    background: #1e1e1e;
-    border-top: 1px solid #333;
+    
+    /* MUDANÇA: Fundo Branco */
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    
     display: flex; justify-content: space-around; align-items: center;
     z-index: 9999;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
 }
+
 .navigation { display: flex; flex: 1; justify-content: center; }
+
 .button {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: none; border: none; color: #888;
+    background: none; border: none;
+    
+    /* MUDANÇA: Cinzento por defeito */
+    color: #6b7280;
+    
     width: 100%; height: 100%; text-decoration: none;
+    transition: color 0.2s;
 }
-.navbar img { width: 24px; height: 24px; margin-bottom: 4px; filter: invert(0.6); }
-.nav1 { font-size: 0.7em; }
-.button:hover { color: #4bc0c0; }
-.button:hover img { filter: invert(0.8) sepia(1) saturate(3) hue-rotate(120deg); }
 
-/* --- CONTEÚDO --- */
+/* Filtro base para cinzento */
+.navbar img { 
+    width: 24px; height: 24px; margin-bottom: 4px; 
+    filter: invert(40%) sepia(8%) saturate(544%) hue-rotate(186deg) brightness(96%) contrast(88%);
+}
+
+.nav1 { font-size: 0.7em; letter-spacing: 0.5px; font-weight: 500; }
+
+/* HOVER ou ATIVO (Wallet) */
+.button:hover, .button[href="wallet.html"] { 
+    /* MUDANÇA: Azul MultiPower */
+    color: #2563EB; 
+}
+
+/* Filtro para Azul quando ativo/hover */
+.button:hover img, .button[href="wallet.html"] img { 
+    filter: invert(31%) sepia(87%) saturate(2548%) hue-rotate(213deg) brightness(96%) contrast(92%);
+}
+
+/* --- CONTEÚDO PRINCIPAL --- */
 .main-content {
     width: 100%;
     max-width: 500px;
     margin: 0 auto;
-    padding-top: 30px; /* Espaço no topo */
+    padding-top: 30px; 
     display: flex; flex-direction: column; align-items: center; gap: 20px;
 }
 
-/* Cartão de Saldo */
+/* --- CARTÃO DE SALDO --- */
 .wallet-card {
-    background: #232323;
+    /* MUDANÇA: Branco com sombra suave */
+    background: #ffffff;
     border-radius: 20px;
     padding: 30px;
     width: 90%;
     text-align: center;
     position: relative;
-    border: 1px solid #333;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    border: none;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Sombra moderna */
 }
 
-.wallet-balance { font-size: 3em; color: #4bc0c0; font-weight: bold; margin: 10px 0; }
-.wallet-label { color: #aaa; letter-spacing: 1px; }
+/* Texto do Saldo */
+.wallet-balance { 
+    font-size: 3.5em; 
+    /* MUDANÇA: Azul */
+    color: #2563EB; 
+    font-weight: 500; 
+    margin: 15px 0; 
+}
 
-/* Botão Flutuante (+) no Cartão */
+.wallet-label { 
+    color: #6b7280; /* Cinzento escuro */
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.9em;
+}
+
+/* --- BOTÃO ADICIONAR SALDO (+) --- */
 #add-balance-btn {
     position: absolute; top: 15px; right: 15px;
     width: 40px; height: 40px;
-    background: #333; border-radius: 50%; border: none;
+    
+    /* MUDANÇA: Azul com ícone branco */
+    background: #2563EB; 
+    
+    border-radius: 50%; border: none;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+    transition: transform 0.2s, background 0.2s;
 }
-#add-balance-btn img { width: 20px; height: 20px; filter: invert(1); }
 
-/* Gráficos */
-.charts-container { width: 90%; display: flex; flex-direction: column; gap: 20px; }
-.chart-card {
-    background: #232323; border-radius: 20px;
-    padding: 20px; border: 1px solid #333;
+#add-balance-btn:hover {
+    background: #1e40af;
+    transform: scale(1.05);
 }
-.chart-card h2 { color: #4bc0c0; font-size: 1.1em; margin-top: 0; }
+
+#add-balance-btn img { 
+    width: 20px; height: 20px; 
+    filter: invert(1); /* Ícone branco */
+}
+
+/* --- GRÁFICOS --- */
+.charts-container { 
+    width: 90%; 
+    display: flex; flex-direction: column; gap: 20px; 
+}
+
+.chart-card {
+    /* MUDANÇA: Branco */
+    background: #ffffff; 
+    border-radius: 20px;
+    padding: 20px; 
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+.chart-card h2 { 
+    /* MUDANÇA: Azul Escuro */
+    color: #1E40AF; 
+    font-size: 1.2em; 
+    margin-top: 0; 
+    margin-bottom: 15px;
+}
+
 canvas { width: 100% !important; height: auto !important; }

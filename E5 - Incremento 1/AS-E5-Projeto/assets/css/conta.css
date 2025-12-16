@@ -1,36 +1,54 @@
 /* --- RESET GLOBAL --- */
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-@import url('https://fonts.googleapis.com/css?family=Oswald:400');
+@import url('https://fonts.googleapis.com/css?family=Oswald:400,500');
 
 body {
     margin: 0; padding: 0;
-    background: #181818;
+    /* MUDANÇA: Fundo claro */
+    background: #f0f2f5; 
     font-family: 'Oswald', sans-serif;
     min-height: 100vh;
     padding-bottom: 90px; /* Garante scroll até ao fim */
 }
 
-/* --- BOTTOM NAVBAR --- */
+/* --- BOTTOM NAVBAR (Igual às outras páginas) --- */
 .navbar {
     position: fixed; bottom: 0; left: 0;
     width: 100%; height: 70px;
-    background: #1e1e1e;
-    border-top: 1px solid #333;
+    background: #ffffff; /* Fundo Branco */
+    border-top: 1px solid #e5e7eb;
     display: flex; justify-content: space-around; align-items: center;
     z-index: 9999;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
 }
+
 .navigation { display: flex; flex: 1; justify-content: center; }
+
 .button {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: none; border: none; color: #888;
+    background: none; border: none;
+    color: #6b7280; /* Cinzento */
     width: 100%; height: 100%; text-decoration: none;
+    transition: color 0.2s;
 }
-.navbar img { width: 24px; height: 24px; margin-bottom: 4px; filter: invert(0.6); }
-.nav1 { font-size: 0.7em; }
-.button:hover { color: #4bc0c0; }
-.button:hover img { filter: invert(0.8) sepia(1) saturate(3) hue-rotate(120deg); }
+
+/* Ícones base cinzentos */
+.navbar img { 
+    width: 24px; height: 24px; margin-bottom: 4px; 
+    filter: invert(40%) sepia(8%) saturate(544%) hue-rotate(186deg) brightness(96%) contrast(88%);
+}
+
+.nav1 { font-size: 0.7em; letter-spacing: 0.5px; font-weight: 500; }
+
+/* ATIVO: Conta */
+.button[href="conta.html"], .button:hover { 
+    color: #2563EB; /* Azul MultiPower */
+}
+
+.button[href="conta.html"] img, .button:hover img { 
+    filter: invert(31%) sepia(87%) saturate(2548%) hue-rotate(213deg) brightness(96%) contrast(92%);
+}
 
 /* --- PERFIL --- */
 .main-content {
@@ -48,65 +66,141 @@ body {
 .profile-image {
     width: 110px; height: 110px;
     border-radius: 50%; object-fit: cover;
-    border: 3px solid #4bc0c0;
+    /* MUDANÇA: Borda Azul */
+    border: 3px solid #2563EB; 
     margin-bottom: 15px;
-    box-shadow: 0 0 20px rgba(75, 192, 192, 0.2);
+    /* Sombra azul suave */
+    box-shadow: 0 0 20px rgba(37, 99, 235, 0.2); 
+    background: #fff; /* Fundo branco caso a img seja transparente */
 }
 
-.profile-name { font-size: 1.8em; color: #fff; margin: 5px 0; }
-.profile-email { color: #888; margin-bottom: 25px; }
+/* MUDANÇA: Cores de texto escuras */
+.profile-name { font-size: 1.8em; color: #1f2937; margin: 5px 0; font-weight: 500; }
+.profile-email { color: #6b7280; margin-bottom: 25px; }
 
-/* Botões Grandes */
+/* Botões Grandes do Menu */
 .profile-buttons {
     display: flex; flex-direction: column; gap: 15px;
     width: 100%;
 }
 
 .profile-btn {
-    background: #232323; color: #fff;
-    border: 1px solid #333; border-radius: 12px;
+    /* MUDANÇA: Botões Brancos estilo cartão */
+    background: #ffffff; 
+    color: #374151; /* Texto cinza escuro */
+    border: 1px solid #e5e7eb; 
+    border-radius: 12px;
     padding: 18px; font-size: 1.1em;
     cursor: pointer; transition: 0.2s;
     font-family: 'Oswald', sans-serif;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
 }
-.profile-btn:active { transform: scale(0.98); background: #2a2a2a; }
 
-/* --- POPUPS / MODAIS --- */
+.profile-btn:active { transform: scale(0.98); background: #f9fafb; }
+.profile-btn:hover { border-color: #2563EB; color: #2563EB; }
+
+/* --- POPUPS / MODAIS (Garagem, Transações, Editar) --- */
 .profile-form-card, #reservations-container, #garage-card {
     position: fixed; bottom: 0; left: 0;
     width: 100%; height: 85vh;
-    background: #232323;
+    
+    /* MUDANÇA: Modal Branco */
+    background: #ffffff; 
+    color: #333;
+    
     border-radius: 20px 20px 0 0;
     padding: 25px;
     z-index: 10000; /* Acima da navbar */
     overflow-y: auto;
-    box-shadow: 0 -5px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 -5px 30px rgba(0,0,0,0.2);
     display: none; /* JS controla isto */
     animation: slideUp 0.3s ease-out;
 }
 
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-/* Decoração do topo do modal */
+/* Traço decorativo no topo do modal */
 .profile-form-card::before, #reservations-container::before, #garage-card::before {
     content: ''; display: block;
     width: 50px; height: 5px;
-    background: #444; border-radius: 5px;
+    background: #e5e7eb; /* Cinza claro */
+    border-radius: 5px;
     margin: 0 auto 20px auto;
 }
 
-/* Formulários e Listas */
+/* Títulos dentro dos modais */
+h1, h2 { color: #2563EB; text-align: center; margin-top: 0; }
+
+/* --- FORMULÁRIOS --- */
 input {
     width: 100%; padding: 12px; margin-bottom: 15px;
-    background: #181818; border: 1px solid #444;
-    color: #fff; border-radius: 8px; font-family: 'Oswald', sans-serif;
+    /* MUDANÇA: Inputs claros */
+    background: #f9fafb; 
+    border: 1px solid #e5e7eb;
+    color: #333; 
+    border-radius: 8px; font-family: 'Oswald', sans-serif;
+    outline: none;
 }
+input:focus { border-color: #2563EB; background: #fff; }
+
+/* Botão de Guardar (Submit) */
 button[type="submit"] {
-    width: 100%; background: #4bc0c0; padding: 15px;
+    width: 100%; 
+    background: #2563EB; /* Azul */
+    padding: 15px;
     border: none; border-radius: 8px; color: #fff; font-size: 1.1em;
+    cursor: pointer;
 }
+button[type="submit"]:hover { background: #1e40af; }
+
+/* Botão de Fechar (X) */
+.close-btn {
+    position: absolute; top: 15px; right: 15px; 
+    background: none; border: none; 
+    color: #9ca3af; font-size: 1.5em; 
+    cursor: pointer; padding: 5px;
+}
+
+/* --- LISTAS (Carros e Transações) --- */
 .carro-item, .reservation {
-    background: #181818; padding: 15px;
+    /* MUDANÇA: Item claro */
+    background: #f9fafb; 
+    padding: 15px;
     margin-bottom: 10px; border-radius: 10px;
-    border-left: 4px solid #4bc0c0;
+    border: 1px solid #e5e7eb;
+    border-left: 4px solid #2563EB; /* Borda lateral azul */
+    color: #333;
+    display: flex; flex-direction: column; gap: 5px;
+}
+
+.carro-item b { font-size: 1.1em; color: #1f2937; }
+.carro-item span { color: #6b7280; font-size: 0.9em; }
+
+/* Transações específicas */
+.reservation-row {
+    display: flex; justify-content: space-between; align-items: center;
+}
+.reservation-value { font-weight: bold; color: #2563EB; font-size: 1.1em; }
+.reservation-date { color: #6b7280; font-size: 0.9em; }
+
+/* Botão Remover Carro */
+.carro-remove-btn {
+    background: #fee2e2; color: #dc2626; /* Vermelho claro */
+    border: 1px solid #fecaca; padding: 8px 12px;
+    border-radius: 6px; cursor: pointer;
+    display: flex; align-items: center; gap: 5px;
+    margin-bottom: 5px; width: fit-content;
+}
+.carro-remove-btn img { width: 16px; height: 16px; filter: none; } /* Ícone vermelho original */
+
+/* Botões de Ação na Garagem (+ Adicionar / - Remover) */
+.garage-actions {
+    display: flex; justify-content: center; gap: 15px; margin-bottom: 20px;
+}
+.btn-action-add {
+    background: #2563EB; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;
+}
+.btn-action-remove {
+    background: #fff; color: #dc2626; border: 1px solid #dc2626; padding: 10px 20px; border-radius: 8px; cursor: pointer;
 }

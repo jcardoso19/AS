@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
             ];
 
-            // Atualiza gráfico mensal (Consumo)
+            // --- GRÁFICO 1: CONSUMO MENSAL (BARRAS) ---
             const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
             new Chart(monthlyCtx, {
                 type: 'bar',
@@ -25,20 +25,32 @@ document.addEventListener('DOMContentLoaded', async function() {
                     datasets: [{
                         label: 'Consumo Mensal (kWh)',
                         data: data.monthly_history,
-                        backgroundColor: '#4bc0c0'
+                        /* MUDANÇA: Azul MultiPower */
+                        backgroundColor: '#2563EB', 
+                        borderRadius: 4 // Barras ligeiramente arredondadas ficam mais modernas
                     }]
                 },
                 options: {
-                    responsive: false,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true } }
+                    responsive: false, // Mantém false se controlas o tamanho no canvas
+                    plugins: { 
+                        legend: { display: false } 
+                    },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: '#e5e7eb' } // Linhas de grelha cinza claro
+                        },
+                        x: {
+                            grid: { display: false } // Remove grelha vertical para ficar mais limpo
+                        }
+                    }
                 }
             });
 
-            // Gera valores de variação de preços (€/kWh) realistas para cada mês (ex: 0.13€ a 0.25€)
+            // Gera valores de variação de preços (€/kWh) realistas
             const priceHistory = Array.from({length: 12}, () => (Math.random() * 0.12 + 0.13).toFixed(3));
 
-            // Atualiza gráfico de variação de preços
+            // --- GRÁFICO 2: VARIAÇÃO DE PREÇO (LINHA) ---
             const yearlyCtx = document.getElementById('yearlyChart').getContext('2d');
             new Chart(yearlyCtx, {
                 type: 'line',
@@ -47,30 +59,45 @@ document.addEventListener('DOMContentLoaded', async function() {
                     datasets: [{
                         label: 'Variação de Preço (€/kWh)',
                         data: priceHistory,
-                        backgroundColor: 'rgba(255,183,77,0.2)',
-                        borderColor: '#ffb74d',
-                        borderWidth: 2,
+                        /* MUDANÇA: Azul claro transparente para o fundo */
+                        backgroundColor: 'rgba(37, 99, 235, 0.15)', 
+                        /* MUDANÇA: Azul forte para a linha */
+                        borderColor: '#2563EB',
+                        borderWidth: 3,
                         fill: true,
-                        tension: 0.3,
-                        pointBackgroundColor: '#ffb74d'
+                        tension: 0.4, // Linha mais curva e suave
+                        pointBackgroundColor: '#1E40AF', // Pontos azul escuro
+                        pointRadius: 4
                     }]
                 },
                 options: {
                     responsive: false,
-                    plugins: { legend: { display: true } },
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            labels: { color: '#333' } // Texto da legenda escuro
+                        } 
+                    },
                     scales: {
                         y: {
                             beginAtZero: false,
                             min: 0.10,
                             max: 0.30,
+                            grid: { color: '#e5e7eb' },
                             ticks: {
+                                color: '#666',
                                 callback: function(value) { return value + '€'; }
                             }
+                        },
+                        x: {
+                            ticks: { color: '#666' },
+                            grid: { display: false }
                         }
                     }
                 }
             });
 
+            // Lógica do botão adicionar saldo
             const addBtn = document.getElementById('add-balance-btn');
             if (addBtn) {
                 addBtn.onclick = async function () {

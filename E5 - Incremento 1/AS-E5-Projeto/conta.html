@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MultiPower</title>
+    <title>MultiPower - Conta</title>
     <link rel="stylesheet" href="assets/css/conta.css">
     <script src="assets/js/conta.js"></script>
 </head>
@@ -12,31 +12,31 @@
     <div class="main-content">
         
         <div class="profile-card">
-            <img src="assets/images/conta.png" alt="Account Image" class="profile-image">
-            <div class="profile-name">Cliente Exemplo</div>
-            <div class="profile-email">cliente@multipower.pt</div>
+            <img src="assets/images/user_avatar.png" onerror="this.src='https://ui-avatars.com/api/?name=User&background=2563EB&color=fff'" alt="Account Image" class="profile-image">
+            <div class="profile-name">A Carregar...</div>
+            <div class="profile-email">...</div>
 
             <div class="profile-buttons">
                 <button class="profile-btn" onclick="toggleGarage()">
-                    🚗 Garagem
+                    <span>🚗</span> Garagem
                 </button>
                 <button id="show-reservations-button" class="profile-btn">
-                    ⚡ Transações
+                    <span>⚡</span> Transações
                 </button>
                 <button class="profile-btn" onclick="toggleProfileForm()">
-                    ⚙️ Alterar Dados
+                    <span>⚙️</span> Alterar Dados
                 </button>
             </div>
         </div>
 
         <div id="garage-card">
-            <button onclick="toggleGarage()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:#aaa; font-size:1.5em; width:auto; padding:5px;">✕</button>
+            <button onclick="toggleGarage()" class="close-btn">✕</button>
             
             <h1>Garagem</h1>
             
-            <div style="display:flex; justify-content:center; gap:15px; margin-bottom:20px;">
-                <button id="add-car-btn" style="width:auto; padding:8px 20px; background:#333; border:1px solid #4bc0c0;">+ Adicionar</button>
-                <button id="remove-car-btn" style="width:auto; padding:8px 20px; background:#333; border:1px solid #e74c3c; color:#e74c3c;">- Remover</button>
+            <div class="garage-actions">
+                <button id="add-car-btn" class="btn-action-add">+ Adicionar</button>
+                <button id="remove-car-btn" class="btn-action-remove">- Remover</button>
             </div>
 
             <div id="garage-list"></div>
@@ -54,13 +54,13 @@
         </div>
 
         <div id="reservations-container">
-            <button onclick="showReservations()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:#aaa; font-size:1.5em; width:auto; padding:5px;">✕</button>
-            <h2 id="reservations-title" style="text-align:center; color:#4bc0c0;">Transações</h2>
+            <button onclick="showReservations()" class="close-btn">✕</button>
+            <h2 id="reservations-title">Transações</h2>
             <div id="reservations-list"></div>
         </div>
 
         <div id="profile-form-card" class="profile-form-card">
-            <button onclick="toggleProfileForm()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:#aaa; font-size:1.5em; width:auto; padding:5px;">✕</button>
+            <button onclick="toggleProfileForm()" class="close-btn">✕</button>
             
             <h1>Editar Perfil</h1>
             <form id="edit-profile-form">
@@ -73,9 +73,9 @@
                 <button type="submit">Guardar Alterações</button>
             </form>
             
-            <hr style="border:0; border-top:1px solid #333; margin:25px 0;">
+            <hr style="border:0; border-top:1px solid #e5e7eb; margin:25px 0;">
             
-            <button id="show-password-form-btn" style="background:#333; border:1px solid #4bc0c0;">Alterar Password</button>
+            <button id="show-password-form-btn" class="profile-btn" style="width:100%; justify-content:center;">Alterar Password</button>
             <form id="password-form" style="display:none; margin-top:15px;">
                 <input type="password" name="nova_password" placeholder="Nova Password">
                 <button type="submit">Atualizar Password</button>
@@ -85,12 +85,6 @@
     </div>
 
     <div class="navbar">
-      <div class="navigation">
-    <a class="button" href="chat.html">
-        <img src="assets/images/elon.png" alt="Chat" />
-        <div class="nav1">CHAT</div>
-    </a>
-</div>
         <div class="navigation">
             <a class="button" href="index.html">
                 <img src="assets/images/map.png" alt="Mapa" />
@@ -104,8 +98,8 @@
             </a>
         </div>
         <div class="navigation">
-            <a class="button" href="conta.html" style="color: #4bc0c0;">
-                <img src="assets/images/conta.png" alt="Conta" style="filter: invert(0.8) sepia(1) saturate(3) hue-rotate(120deg);" />
+            <a class="button" href="conta.html">
+                <img src="assets/images/conta.png" alt="Conta"/>
                 <div class="nav1">CONTA</div>
             </a>
         </div>

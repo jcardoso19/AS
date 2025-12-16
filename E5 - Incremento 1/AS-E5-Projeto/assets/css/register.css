@@ -1,66 +1,32 @@
-/* --- GENERAL STYLES --- */
-@import url('https://fonts.googleapis.com/css?family=Oswald:400');
+/* --- ESTILOS GERAIS --- */
+@import url('https://fonts.googleapis.com/css?family=Oswald:400,500,700');
 
 body {
     margin: 0;
     padding: 0;
-    background: #181818;
+    /* Fundo Azul MultiPower */
+    background: #2563EB; 
     font-family: 'Oswald', sans-serif;
     min-height: 100vh;
-}
-
-.register-form-columns {
     display: flex;
-    gap: 32px;
-    flex-wrap: wrap;
     justify-content: center;
-    width: 100%;
-    margin-bottom: 10px;
+    align-items: center;
 }
 
-.register-col {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    min-width: 220px;
-    flex: 1 1 220px;
-}
-
-.register-row {
-    display: flex;
-    gap: 12px;
-}
-
-.register-row input {
-    flex: 1;
-}
-
-@media (max-width: 900px) {
-    .register-form-columns {
-        flex-direction: column;
-        gap: 0;
-    }
-
-    .register-row {
-        flex-direction: column;
-        gap: 0;
-    }
-}
-
-/* --- NAVBAR --- */
+/* --- NAVBAR (Atualizada para o tema Azul/Branco) --- */
 .navbar {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 65px;
-    background: #1e1e1e;
+    background: #1E40AF; /* Azul ligeiramente mais escuro */
     color: #fff;
     z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .navbar .navigation {
@@ -81,7 +47,6 @@ body {
     font-size: 1em;
     cursor: pointer;
     transition: background 0.2s;
-    position: relative;
     width: 120px;
     box-sizing: border-box;
     text-decoration: none;
@@ -94,165 +59,146 @@ body {
     filter: invert(1);
 }
 
-.nav1 {
-    font-size: 0.9em;
-    font-family: 'Oswald', sans-serif;
-    letter-spacing: 2px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    margin-left: 2px;
-}
-
-.button:hover,
-.button:focus {
-    background: #232323;
-}
-
-.button:hover .nav1,
-.button:focus .nav1 {
-    opacity: 0.9;
-}
-
-/* --- Isto força estilo mobile para coisas necessarias em todas as paginas --- */
-@media (max-width: 700px) {
-    .navbar {
-        flex-wrap: wrap;
-        height: auto;
-        padding: 10px 0;
-        justify-content: space-between;
-    }
-
-    .navbar .navigation {
-        margin: 0 2px;
-    }
-
-    .button {
-        width: 60px;
-        font-size: 0.8em;
-        padding: 8px 2px;
-        flex-direction: column;
-        align-items: center;
-        margin: 0 2px;
-    }
-
-    .navbar img {
-        width: 22px;
-        height: 22px;
-        margin: 0 0 2px 0;
-    }
-
-    .nav1 {
-        font-size: 0.6em;
-        margin-left: 0;
-        margin-top: 2px;
-    }
-
-    .main-content {
-        margin-top: 120px;
-    }
-}
-
-/* --- register PAGE --- */
+/* --- CARTÃO DE REGISTO --- */
 .main-content {
-    margin-top: 90px;
+    /* Margem superior para compensar a navbar fixa */
+    margin-top: 80px; 
+    width: 100%;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 32px;
-}
-
-.register-card select {
-    margin-bottom: 12px;
-    border: none;
-    border-bottom: 1px solid #3f3f3f;
-    outline: none;
-    padding: 8px;
-    background: transparent;
-    color: #fff;
-    font-size: 1em;
-    font-family: 'Oswald', sans-serif;
-    border-radius: 0;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    padding-bottom: 50px; /* Espaço extra no fundo para scroll */
 }
 
 .register-card {
-    background: #232323;
+    background: #ffffff; /* Fundo Branco */
     border-radius: 18px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10);
-    padding: 24px 24px 16px 24px;
-    color: #fff;
-    min-width: 320px;
-    max-width: 800px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    padding: 40px 30px;
+    width: 100%;
+    max-width: 850px; /* Mais largo que o login para caber 2 colunas */
     text-align: center;
-    margin-bottom: 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    color: #333;
 }
 
+/* --- LOGO --- */
+.register-card .logo {
+    width: 150px; /* Logo grande */
+    height: auto;
+    margin-bottom: 10px;
+}
+
+/* --- TÍTULO --- */
+.register-card h2 {
+    color: #2563EB; /* Azul */
+    margin: 0 0 25px 0;
+    font-size: 1.8em;
+    font-weight: 500;
+}
+
+/* --- SISTEMA DE COLUNAS DO FORMULÁRIO --- */
 .register-card form {
     width: 100%;
 }
 
-.register-card .logo {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 18px;
-}
-
-.register-card h2 {
-    font-size: 1.3em;
-    margin-bottom: 18px;
-    color: #4bc0c0;
-}
-
-.register-card input {
+.register-form-columns {
+    display: flex;
+    gap: 20px; /* Espaço entre as colunas */
+    flex-wrap: wrap;
+    justify-content: center;
     width: 100%;
-    margin-bottom: 12px;
-    border: none;
-    border-bottom: 1px solid #3f3f3f;
+    margin-bottom: 15px;
+}
+
+.register-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0; /* O gap é gerido pela margem dos inputs */
+    flex: 1; /* Ocupam espaço igual */
+    min-width: 280px; /* Largura mínima antes de quebrar linha */
+}
+
+/* Linha para Nome/Apelido */
+.register-row {
+    display: flex;
+    gap: 15px;
+}
+
+.register-row input {
+    width: 100%; /* Garante que ocupam o espaço disponível */
+}
+
+/* --- ESTILO DOS INPUTS E SELECTS --- */
+.register-card input, 
+.register-card select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    
+    /* Estilo Caixa Moderna */
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    border-radius: 8px;
+    
+    font-family: 'Oswald', sans-serif;
+    font-size: 1em;
+    color: #333; /* Texto escuro */
     outline: none;
-    padding: 8px;
-    background: transparent;
-    color: #fff;
-    font-size: 1em;
-    font-family: 'Oswald', sans-serif;
-    border-radius: 0;
+    transition: border 0.3s, background 0.3s;
 }
 
-.register-card button {
-    background: #4bc0c0;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 18px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background 0.2s;
-    font-family: 'Oswald', sans-serif;
-    margin-top: 10px;
-    width: 100%;
-}
-
-.register-card button:hover,
-.register-card button:focus {
-    background: #369b9b;
-}
-
-.social-button {
+.register-card input:focus, 
+.register-card select:focus {
+    border-color: #2563EB;
     background: #fff;
-    color: #232323;
+}
+
+/* Placeholder styling */
+.register-card input::placeholder {
+    color: #9ca3af;
+}
+
+/* --- BOTÃO DE REGISTO --- */
+.register-button {
+    width: 100%;
+    padding: 14px;
+    background: #1f2937; /* Preto/Cinza Escuro */
+    color: white;
     border: none;
     border-radius: 8px;
-    padding: 10px 18px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background 0.2s;
+    font-size: 1.1em;
     font-family: 'Oswald', sans-serif;
+    cursor: pointer;
     margin-top: 10px;
+    transition: background 0.3s;
+}
+
+.register-button:hover {
+    background: #000000;
+}
+
+/* --- BOTÕES SOCIAIS --- */
+.social-button {
     width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.95em;
+    cursor: pointer;
+    margin-top: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #333;
+    transition: background 0.2s;
+    max-width: 400px; /* Limita a largura dos botões sociais para não ficarem gigantes */
 }
 
 .social-button img {
@@ -261,29 +207,45 @@ body {
     margin-right: 10px;
 }
 
-.social-button.google-button {
-    background: #fff;
-    color: #232323;
-}
-
 .social-button.facebook-button {
-    background: #3b5998;
-    color: #fff;
+    background: #1877F2;
+    color: white;
+    border: none;
 }
-
 .social-button.facebook-button img {
     filter: invert(1);
 }
 
+.social-button.google-button:hover {
+    background-color: #f3f4f6;
+}
 
-/* --- Isto força estilo mobile para coisas necessarias nest pagina --- */
-@media (max-width: 700px) {
-    .register-card {
-        width: 80vw;
+/* --- LINKS --- */
+.register-card a {
+    color: #2563EB !important;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.register-card a:hover {
+    text-decoration: underline;
+}
+
+/* --- RESPONSIVIDADE (MOBILE) --- */
+@media (max-width: 768px) {
+    .register-form-columns {
+        flex-direction: column;
+        gap: 0;
     }
 
-    .logo {
-        width: 60px;
-        height: 60px;
+    .register-card {
+        padding: 20px;
+        width: 90%;
+    }
+
+    /* Em mobile, nome e apelido ficam um por cima do outro */
+    .register-row {
+        flex-direction: column; 
+        gap: 0;
     }
 }
