@@ -2,10 +2,7 @@
 
 ## Equipa
 
-- Tiago Pita - 120152
-- Duarte Lourenço - 114421
-- José Coelho - 120009
-- Tiago Vieira - 119655
+Henrique Moreira(119809), João Cardoso(120440), Nicolas Sousa (119744)
 
 ---
 
@@ -76,3 +73,4 @@ Aplicação web para gestão de estações de carregamento de veículos elétric
 - Gestão de veículos (garagem)
 - Edição de dados pessoais e password
 - Administração de estações locais e manutenção (apenas para admin)
+
