@@ -3,7 +3,8 @@ const router = express.Router();
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-const dbPath = path.resolve(__dirname, '../db/users.db');
+// Caminho para a base de dados na raiz do projeto
+const dbPath = path.resolve(__dirname, '../../db/users.db');
 const db = new sqlite3.Database(dbPath);
 
 // ROTA: Login
@@ -31,15 +32,6 @@ router.get('/wallet/:email', (req, res) => {
     });
 });
 
-// ROTA: Adicionar Saldo
-router.post('/adicionar-saldo', (req, res) => {
-    const { email, valor } = req.body;
-    db.run("UPDATE wallets SET saldo = saldo + ? WHERE user_id = (SELECT id FROM users WHERE email = ?)", [valor, email], (err) => {
-        if (err) return res.status(500).json(err);
-        res.json({ success: true, valor_adicionado: valor });
-    });
-});
-
 // ROTA: Listar Carros
 router.get('/carros/:email', (req, res) => {
     db.all("SELECT cars.* FROM cars JOIN users ON users.id = cars.user_id WHERE users.email = ?", [req.params.email], (err, rows) => {
@@ -58,44 +50,11 @@ router.post('/adicionar-carro', (req, res) => {
     });
 });
 
-// ROTA: Remover Carro
-router.post('/remover-carro', (req, res) => {
-    db.run("DELETE FROM cars WHERE id = ?", [req.body.id], (err) => {
-        if (err) return res.status(500).json(err);
-        res.json({ success: true });
-    });
-});
-
-// ROTA: Transações/Histórico
+// ROTA: Transações
 router.get('/transacoes/:email', (req, res) => {
     db.all("SELECT * FROM transactions JOIN users ON users.id = transactions.user_id WHERE users.email = ?", [req.params.email], (err, rows) => {
         if (err) return res.status(500).json(err);
         res.json(rows || []);
-    });
-});
-
-// ROTA: Confirmar Pagamento
-router.post('/confirmar-pagamento', (req, res) => {
-    const { email, valor, estacao } = req.body;
-    db.serialize(() => {
-        db.run("UPDATE wallets SET saldo = saldo - ? WHERE user_id = (SELECT id FROM users WHERE email = ?)", [valor, email]);
-        db.run("INSERT INTO transactions (user_id, tipo, estacao, valor, detalhes) VALUES ((SELECT id FROM users WHERE email = ?), 'Reserva', ?, ?, 'Pagamento App')", 
-        [email, estacao, valor], (err) => {
-            if (err) return res.status(500).json(err);
-            res.json({ success: true });
-        });
-    });
-});
-
-// ROTA: Cancelar Transação
-router.post('/cancelar-transacao', (req, res) => {
-    const { id, user_email } = req.body;
-    db.serialize(() => {
-        db.run("UPDATE wallets SET saldo = saldo + 8.50 WHERE user_id = (SELECT id FROM users WHERE email = ?)", [user_email]);
-        db.run("UPDATE transactions SET detalhes = '[CANCELADO]' WHERE id = ?", [id], (err) => {
-            if (err) return res.status(500).json(err);
-            res.json({ success: true, reembolso: 8.50 });
-        });
     });
 });
 
