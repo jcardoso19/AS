@@ -1,37 +1,28 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const email = 'cliente@multipower.pt'; // Fixo para demo
+    const email = 'cliente@multipower.pt';
     localStorage.setItem('email', email);
 
-    // Inicializar dados
     carregarPerfil(email);
     carregarGaragem(email);
-    
-    // Configurar submissão do formulário de carro
     setupAddCarForm(email);
+    
+    // NOTA: openTransactions() é chamado via onclick no HTML, não aqui.
 });
 
-/* --- LÓGICA DE DADOS --- */
-
+// --- PERFIL & GARAGEM (MANTÉM IGUAL) ---
 async function carregarPerfil(email) {
     try {
         const res = await fetch(`http://localhost:3000/api/perfil/${email}`);
         const user = await res.json();
-        
         if (user.nome) {
-            // Atualiza Header
             document.querySelector('.profile-name').textContent = `${user.nome} ${user.apelido || ''}`;
             document.querySelector('.profile-email').textContent = user.email;
-            
-            // Atualiza Gamification
-            document.getElementById('co2-val').textContent = user.co2_saved || 0;
+            document.getElementById('co2-val').textContent = user.co2_saved ? user.co2_saved.toFixed(1) : 0;
             document.getElementById('points-val').textContent = user.points || 0;
-
-            // Preenche formulário de edição (para quando o user abrir)
             document.getElementById('edit-email').value = user.email;
             document.getElementById('edit-phone').value = user.telefone || '';
-            document.getElementById('edit-address').value = user.morada || '';
         }
-    } catch(e) { console.error("Erro perfil:", e); }
+    } catch(e) { console.error("Erro ao carregar perfil:", e); }
 }
 
 async function carregarGaragem(email) {
@@ -39,27 +30,19 @@ async function carregarGaragem(email) {
         const res = await fetch(`http://localhost:3000/api/carros/${email}`);
         const carros = await res.json();
         const lista = document.getElementById('garage-list');
-        
         lista.innerHTML = '';
 
         if (carros.length === 0) {
-            lista.innerHTML = `
-                <div style="background:#252525; padding:30px; border-radius:16px; text-align:center; border:1px dashed #444;">
-                    <p style="color:#888;">A sua garagem está vazia.</p>
-                    <button onclick="openAddCar()" class="btn-mini-add" style="margin-top:10px;">Adicionar Viatura</button>
-                </div>`;
+            lista.innerHTML = `<div style="background:#252525; padding:20px; border-radius:12px; text-align:center; color:#888;">Garagem vazia.</div>`;
             return;
         }
 
-        // Criar cartões modernos para cada carro
         carros.forEach(carro => {
             const div = document.createElement('div');
             div.className = 'car-card';
-            
-            // Determinar ícone e texto da ficha
             const isCCS = carro.connection_type == 33;
             const plugName = isCCS ? 'CCS 2' : 'Type 2';
-            const plugColor = isCCS ? '#4bc0c0' : '#f39c12'; // Verde ou Laranja
+            const plugColor = isCCS ? '#4bc0c0' : '#f39c12';
 
             div.innerHTML = `
                 <div class="car-icon-box">🚗</div>
@@ -68,99 +51,154 @@ async function carregarGaragem(email) {
                     <div class="car-meta">
                         <span class="car-tag">${carro.matricula}</span>
                         <span class="car-tag">🔋 ${carro.battery_size} kWh</span>
-                        <span class="car-tag" style="color:${plugColor}">⚡ ${plugName}</span>
+                        <span class="car-tag" style="color:${plugColor}">${plugName}</span>
                     </div>
                 </div>
                 <button class="btn-delete" onclick="removerCarro(${carro.id})">✕</button>
             `;
             lista.appendChild(div);
         });
-
-    } catch(e) { console.error("Erro garagem:", e); }
+    } catch(e) { console.error("Erro ao carregar garagem:", e); }
 }
 
+// --- FUNÇÃO DE TRANSAÇÕES E CANCELAMENTO (MELHORADA) ---
+
+window.openTransactions = async function() {
+    const container = document.getElementById('reservations-container');
+    container.innerHTML = '<p style="text-align:center; color:#888;">A carregar histórico...</p>';
+    
+    openSheet('sheet-transactions'); 
+
+    try {
+        const email = localStorage.getItem('email');
+        const res = await fetch(`http://localhost:3000/api/transacoes/${email}`);
+        const transacoes = await res.json();
+
+        container.innerHTML = '';
+
+        if (transacoes.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#888; margin-top:20px;">Sem movimentos.</p>';
+            return;
+        }
+
+        transacoes.forEach(t => {
+            // Lógica para determinar o estado e o valor
+            const isRefund = t.tipo === 'Reembolso' || t.valor > 0;
+            const isCancelled = t.detalhes.includes('[CANCELADO]');
+            const isCharge = t.tipo === 'Carregamento';
+
+            let valorClass = isRefund || isCharge ? 'text-green' : 'text-red';
+            let valorSinal = isRefund || isCharge ? '+' : '-';
+            let valorDisplay = Math.abs(t.valor).toFixed(2);
+            
+            let icon = '';
+            let title = '';
+            let details = t.detalhes;
+
+            if (isCharge) {
+                title = 'Carregamento de Saldo';
+                icon = '➕';
+                details = t.detalhes; // Ex: 'MB Way'
+            } else if (t.tipo === 'Reembolso') {
+                title = 'Reembolso de Reserva';
+                icon = '↩️';
+                details = t.detalhes; // Ex: 'Taxa 1.50€'
+            } else if (t.tipo === 'Reserva') {
+                title = isCancelled ? 'Reserva Cancelada' : 'Reserva Ativa';
+                icon = isCancelled ? '🚫' : '⚡';
+                // Mostra estação + detalhes da carga/metodo.
+                details = `${t.estacao} • ${t.detalhes.split(' • ')[0] || ''}`; 
+                
+                if (isCancelled) details = t.estacao + ' (Cancelada)';
+            }
+            
+            // Botão Cancelar aparece se: For Reserva e NÃO estiver cancelada
+            let btnCancel = '';
+            if (t.tipo === 'Reserva' && !isCancelled) {
+                btnCancel = `<button onclick="cancelarReserva(${t.id})" class="btn-cancel-mini">Cancelar</button>`;
+            }
+
+            const item = document.createElement('div');
+            item.className = 'trans-item';
+            item.innerHTML = `
+                <div class="trans-info">
+                    <div class="trans-title">${icon} ${title}</div>
+                    <div class="trans-date">${details}</div>
+                </div>
+                <div class="trans-actions">
+                    <div class="trans-price ${valorClass}">${valorSinal}${valorDisplay}€</div>
+                    ${btnCancel}
+                </div>
+            `;
+            container.appendChild(item);
+        });
+
+    } catch (e) {
+        console.error("Erro ao carregar histórico:", e);
+        container.innerHTML = '<p style="color:#e74c3c; text-align:center;">Erro ao carregar histórico.</p>';
+    }
+}
+
+window.cancelarReserva = async function(id) {
+    if(!confirm("Deseja cancelar esta reserva?\n\nSerá devolvido ao saldo com uma taxa de 1.50€.")) return;
+
+    try {
+        const response = await fetch('http://localhost:3000/api/cancelar-transacao', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                id: id, 
+                user_email: localStorage.getItem('email') 
+            })
+        });
+
+        const res = await response.json();
+
+        if (response.ok) {
+            alert(`✅ Reserva Cancelada.\nForam devolvidos ${res.reembolso.toFixed(2)}€ à sua carteira.`);
+            openTransactions(); 
+            carregarPerfil(localStorage.getItem('email')); 
+        } else {
+            alert("Erro: " + res.error);
+        }
+    } catch(e) {
+        alert("Erro de comunicação.");
+    }
+}
+
+// --- UTILITÁRIOS FORMS (MANTÉM IGUAL) ---
 function setupAddCarForm(email) {
     const form = document.getElementById('add-car-form');
-    
+    if(!form) return;
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        // Transformar FormData em Objeto JSON
         const data = Object.fromEntries(new FormData(form).entries());
-        data.email = email; // Adicionar email manualmente
-
-        try {
-            const response = await fetch('http://localhost:3000/api/adicionar-carro', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            if (response.ok) {
-                form.reset();
-                closeAllSheets(); // Fecha o menu deslizante
-                carregarGaragem(email); // Atualiza a lista visual
-                alert("Viatura adicionada com sucesso!");
-            } else {
-                alert("Erro ao adicionar viatura.");
-            }
-        } catch (error) {
-            console.error(error);
-        }
+        data.email = email;
+        await fetch('http://localhost:3000/api/adicionar-carro', {
+            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+        });
+        form.reset(); closeAllSheets(); carregarGaragem(email);
     });
 }
 
-async function removerCarro(id) {
-    if(!confirm("Tem a certeza que deseja remover esta viatura?")) return;
-    
-    await fetch('http://localhost:3000/api/remover-carro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-    });
-    carregarGaragem(localStorage.getItem('email'));
-}
+window.removerCarro = async (id) => {
+    if(confirm('Apagar?')) {
+        await fetch('http://localhost:3000/api/remover-carro', {
+            method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})
+        });
+        carregarGaragem(localStorage.getItem('email'));
+    }
+};
 
-/* --- INTERFACE: BOTTOM SHEETS --- */
-
-// Funções globais para abrir os menus
+// UI Helpers
 window.openAddCar = () => openSheet('sheet-add-car');
 window.openEditProfile = () => openSheet('sheet-profile');
 
-window.openTransactions = () => {
-    const container = document.getElementById('reservations-container');
-    // Simulação de dados (podes ligar à API depois)
-    container.innerHTML = `
-        <div style="background:#252525; padding:15px; border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <div style="font-weight:bold; color:#fff;">Carregamento Rápido</div>
-                <div style="font-size:0.8em; color:#888;">Ontem, 18:30 • Brooklyn Station</div>
-            </div>
-            <div style="color:#e74c3c; font-weight:bold;">-12.50€</div>
-        </div>
-        <div style="background:#252525; padding:15px; border-radius:12px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <div style="font-weight:bold; color:#fff;">Reserva Cancelada</div>
-                <div style="font-size:0.8em; color:#888;">10 Dez • Supercharger</div>
-            </div>
-            <div style="color:#aaa;">0.00€</div>
-        </div>
-    `;
-    openSheet('sheet-transactions');
-}
-
-// Lógica Genérica de Abertura/Fecho
 function openSheet(id) {
     document.getElementById('overlay').classList.add('active');
     document.getElementById(id).classList.add('active');
 }
-
-window.closeAllSheets = function() {
+window.closeAllSheets = () => {
     document.getElementById('overlay').classList.remove('active');
-    document.querySelectorAll('.bottom-sheet').forEach(el => {
-        el.classList.remove('active');
-    });
+    document.querySelectorAll('.bottom-sheet').forEach(el => el.classList.remove('active'));
 }
-
-// Tornar funções globais para o HTML conseguir chamar
-window.removerCarro = removerCarro;

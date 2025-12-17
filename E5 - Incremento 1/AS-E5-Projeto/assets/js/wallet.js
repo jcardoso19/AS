@@ -1,132 +1,117 @@
-document.addEventListener('DOMContentLoaded', async function() {
-    // Definir cliente fixo
-    const email = 'cliente@multipower.pt';
-    localStorage.setItem('email', email);
-    
-    try {
-        const response = await fetch(`http://localhost:3000/api/wallet/${email}`);
-        if (response.ok) {
-            const data = await response.json();
-            // Atualiza saldo
-            document.querySelector('.wallet-balance').textContent = `${parseFloat(data.saldo).toFixed(2)}€`;
-
-            // Labels para os meses
-            const monthlyLabels = [
-                'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-                'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
-            ];
-
-            // --- GRÁFICO 1: CONSUMO MENSAL (BARRAS) ---
-            const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-            new Chart(monthlyCtx, {
-                type: 'bar',
-                data: {
-                    labels: monthlyLabels,
-                    datasets: [{
-                        label: 'Consumo Mensal (kWh)',
-                        data: data.monthly_history,
-                        /* MUDANÇA: Azul MultiPower */
-                        backgroundColor: '#2563EB', 
-                        borderRadius: 4 // Barras ligeiramente arredondadas ficam mais modernas
-                    }]
-                },
-                options: {
-                    responsive: false, // Mantém false se controlas o tamanho no canvas
-                    plugins: { 
-                        legend: { display: false } 
-                    },
-                    scales: { 
-                        y: { 
-                            beginAtZero: true,
-                            grid: { color: '#e5e7eb' } // Linhas de grelha cinza claro
-                        },
-                        x: {
-                            grid: { display: false } // Remove grelha vertical para ficar mais limpo
-                        }
-                    }
-                }
-            });
-
-            // Gera valores de variação de preços (€/kWh) realistas
-            const priceHistory = Array.from({length: 12}, () => (Math.random() * 0.12 + 0.13).toFixed(3));
-
-            // --- GRÁFICO 2: VARIAÇÃO DE PREÇO (LINHA) ---
-            const yearlyCtx = document.getElementById('yearlyChart').getContext('2d');
-            new Chart(yearlyCtx, {
-                type: 'line',
-                data: {
-                    labels: monthlyLabels,
-                    datasets: [{
-                        label: 'Variação de Preço (€/kWh)',
-                        data: priceHistory,
-                        /* MUDANÇA: Azul claro transparente para o fundo */
-                        backgroundColor: 'rgba(37, 99, 235, 0.15)', 
-                        /* MUDANÇA: Azul forte para a linha */
-                        borderColor: '#2563EB',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4, // Linha mais curva e suave
-                        pointBackgroundColor: '#1E40AF', // Pontos azul escuro
-                        pointRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: false,
-                    plugins: { 
-                        legend: { 
-                            display: true,
-                            labels: { color: '#333' } // Texto da legenda escuro
-                        } 
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            min: 0.10,
-                            max: 0.30,
-                            grid: { color: '#e5e7eb' },
-                            ticks: {
-                                color: '#666',
-                                callback: function(value) { return value + '€'; }
-                            }
-                        },
-                        x: {
-                            ticks: { color: '#666' },
-                            grid: { display: false }
-                        }
-                    }
-                }
-            });
-
-            // Lógica do botão adicionar saldo
-            const addBtn = document.getElementById('add-balance-btn');
-            if (addBtn) {
-                addBtn.onclick = async function () {
-                    let valor = prompt("Quanto saldo deseja adicionar? (€)");
-                    if (!valor) return;
-                    valor = parseFloat(valor.replace(',', '.'));
-                    if (isNaN(valor) || valor <= 0) {
-                        alert("Valor inválido.");
-                        return;
-                    }
-                    const email = localStorage.getItem('email');
-                    const resp = await fetch('http://localhost:3000/api/wallet/add', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, valor })
-                    });
-                    if (resp.ok) {
-                        alert("Saldo adicionado com sucesso!");
-                        location.reload();
-                    } else {
-                        alert("Erro ao adicionar saldo.");
-                    }
-                };
-            }
-
-        } else {
-            document.querySelector('.wallet-balance').textContent = 'Erro ao carregar saldo';
-        }
-    } catch (err) {
-        document.querySelector('.wallet-balance').textContent = 'Erro de ligação';
-    }
+document.addEventListener('DOMContentLoaded', () => {
+    const email = localStorage.getItem('email') || 'cliente@multipower.pt';
+    carregarDadosWallet(email);
 });
+
+async function carregarDadosWallet(email) {
+    // 1. Carregar Saldo
+    try {
+        const resWallet = await fetch(`http://localhost:3000/api/wallet/${email}`);
+        const wallet = await resWallet.json();
+        document.getElementById('balance-display').textContent = `${(wallet.saldo || 0).toFixed(2)}€`;
+    } catch(e) { 
+        document.getElementById('balance-display').textContent = 'Erro';
+        console.error("Erro ao carregar saldo:", e);
+    }
+    
+    // 2. Carregar Transações
+    try {
+        const resTrans = await fetch(`http://localhost:3000/api/transacoes/${email}`);
+        if (!resTrans.ok) throw new Error("Falha ao buscar transações");
+        const transacoes = await resTrans.json();
+        renderTransacoes(transacoes);
+    } catch(e) {
+        document.getElementById('transactions-feed').innerHTML = `<p style="text-align:center; color:#e74c3c;">Erro ao ligar ao servidor.</p>`;
+        console.error("Erro ao buscar transações:", e);
+    }
+}
+
+function renderTransacoes(transacoes) {
+    const feed = document.getElementById('transactions-feed');
+    feed.innerHTML = '';
+    
+    if (transacoes.length === 0) {
+        feed.innerHTML = `<p style="text-align:center; color:#666;">Sem movimentos registados.</p>`;
+        return;
+    }
+
+    transacoes.forEach(t => {
+        // Se o tipo for 'Carregamento' ou o valor for positivo, é Crédito.
+        const isCredit = t.tipo === 'Carregamento' || t.valor > 0;
+        const valorDisplay = Math.abs(t.valor).toFixed(2);
+        
+        let title = t.tipo;
+        let details = t.detalhes || t.estacao; // Usa detalhes ou estação
+
+        if (t.tipo === 'Reserva') {
+            title = 'Reserva de Carregamento';
+        } else if (t.tipo === 'Reembolso') {
+            title = 'Reembolso';
+        } else if (t.tipo === 'Carregamento') {
+             title = 'Carregamento de Saldo';
+             details = t.detalhes;
+        }
+
+        const item = document.createElement('div');
+        item.className = 'transaction-item';
+        
+        item.innerHTML = `
+            <div class="trans-info">
+                <div class="trans-title">${isCredit ? '➕ ' : '⚡ '}${title}</div>
+                <div class="trans-date">${details}</div>
+            </div>
+            <div class="trans-amount ${isCredit ? 'amount-credit' : 'amount-debit'}">
+                ${isCredit ? '+' : '-'} ${valorDisplay}€
+            </div>
+        `;
+        feed.appendChild(item);
+    });
+}
+
+
+// --- NOVA FUNCIONALIDADE: ADICIONAR FUNDOS ---
+window.addFunds = async function() {
+    const valorInput = prompt("Quanto deseja carregar? (Ex: 25.00)");
+    
+    if (valorInput === null || valorInput.trim() === "") {
+        return; // Operação cancelada
+    }
+
+    const valor = parseFloat(valorInput.replace(',', '.'));
+    
+    if (isNaN(valor) || valor <= 0) {
+        alert("Por favor, insira um valor numérico válido e positivo.");
+        return;
+    }
+    
+    const metodo = "MB WAY (Simulado)";
+    
+    if (!confirm(`Confirma o carregamento de ${valor.toFixed(2)}€ via ${metodo}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/api/adicionar-saldo', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                email: localStorage.getItem('email'),
+                valor: valor,
+                metodo: metodo
+            })
+        });
+
+        const res = await response.json();
+
+        if (response.ok) {
+            alert(`✅ Sucesso! Foram adicionados ${res.valor_adicionado.toFixed(2)}€ ao seu saldo.`);
+            // Recarrega os dados para atualizar o ecrã
+            carregarDadosWallet(localStorage.getItem('email'));
+        } else {
+            alert("❌ Erro ao carregar saldo: " + (res.error || "Falha desconhecida."));
+        }
+    } catch(e) {
+        console.error("Erro de comunicação ao carregar saldo:", e);
+        alert("Erro de ligação ao servidor. Verifique a consola.");
+    }
+};

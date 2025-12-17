@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css?family=Oswald:300,400,600');
+
+/* Reset Básico */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+    margin: 0; padding: 0;
+    background: #121212;
+    color: #fff;
+    font-family: 'Oswald', sans-serif;
+    overflow-x: hidden;
+    padding-bottom: 90px; /* Espaço para a navbar */
+}
+
+/* --- HEADER DE BOAS VINDAS --- */
+.header-section {
+    padding: 30px 20px 15px;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    background: linear-gradient(180deg, #1e1e1e 0%, #121212 100%);
+    border-bottom: 1px solid #2a2a2a;
+}
+.welcome-text h1 { margin: 0; font-size: 1.8em; font-weight: 600; letter-spacing: 0.5px; }
+.welcome-text p { margin: 4px 0 0; color: #888; font-size: 0.9em; }
+.weather-badge {
+    background: #2a2a2a; padding: 8px 12px; border-radius: 20px;
+    font-size: 0.9em; border: 1px solid #333; display: flex; align-items: center; gap: 5px;
+}
+
+/* --- ESTATÍSTICAS RÁPIDAS (CARTÕES) --- */
+.quick-stats {
+    display: flex; gap: 12px; padding: 0 20px; margin-top: 20px;
+}
+
+.stat-card {
+    flex: 1; 
+    background: #1e1e1e; 
+    border-radius: 16px;
+    padding: 15px 10px; 
+    text-align: center;
+    border: 1px solid #333; 
+    display: flex; 
+    flex-direction: column;
+    transition: transform 0.1s;
+}
+
+.stat-card:active { transform: scale(0.98); }
+
+.stat-card.highlight {
+    background: #4bc0c0; 
+    border-color: #4bc0c0; 
+    cursor: pointer;
+}
+
+.stat-icon { font-size: 1.4em; margin-bottom: 5px; display: block; }
+.stat-val { font-size: 1.1em; font-weight: bold; margin: 2px 0; color: #fff; display: block; }
+.stat-lbl { font-size: 0.7em; text-transform: uppercase; color: #888; letter-spacing: 1px; }
+
+/* Ajuste de cor para o cartão de destaque */
+.stat-card.highlight .stat-val, 
+.stat-card.highlight .stat-lbl { color: #000; }
+
+/* --- GRÁFICO DE ENERGIA --- */
+.chart-section { margin: 30px 20px; }
+.section-title { 
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; 
+}
+.section-title h3 { 
+    margin: 0; font-weight: 400; border-left: 3px solid #4bc0c0; padding-left: 10px; font-size: 1.2em;
+}
+
+.live-badge { 
+    background: #e74c3c; color: white; font-size: 0.6em; padding: 3px 8px; 
+    border-radius: 4px; animation: blink 2s infinite; font-weight: bold; letter-spacing: 1px;
+}
+
+.chart-box {
+    background: #1e1e1e; border-radius: 16px; padding: 15px;
+    border: 1px solid #333; height: 220px; position: relative;
+}
+
+.chart-info { 
+    text-align: center; color: #888; font-size: 0.8em; margin-top: 10px; 
+    background: #1a1a1a; padding: 8px; border-radius: 8px; width: fit-content; margin: 10px auto 0;
+}
+
+/* --- FEED DE NOTÍCIAS --- */
+.news-section { margin: 0 20px 20px; }
+.news-section h3 { 
+    margin: 0 0 15px; font-weight: 400; border-left: 3px solid #4bc0c0; padding-left: 10px; font-size: 1.2em; 
+}
+
+.news-item {
+    background: #1e1e1e; border-radius: 16px; overflow: hidden;
+    margin-bottom: 15px; border: 1px solid #333;
+    display: flex; flex-direction: column;
+}
+
+.news-img {
+    height: 140px; background-size: cover; background-position: center;
+    background-color: #333;
+}
+
+.news-content { padding: 15px; }
+.news-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.news-source { color: #4bc0c0; font-size: 0.7em; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+.news-date { color: #666; font-size: 0.7em; }
+.news-title { font-size: 1.1em; margin: 0; line-height: 1.4; font-weight: 400; }
+
+/* --- NAVBAR (Cópia para garantir consistência) --- */
+.navbar {
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 75px;
+    background: #1e1e1e; border-top: 1px solid #333;
+    display: flex; justify-content: space-around; align-items: center; z-index: 1000;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+}
+.navigation { display: flex; flex: 1; justify-content: center; }
+.button {
+    display: flex; flex-direction: column; align-items: center;
+    background: none; border: none; color: #666; text-decoration: none;
+    transition: color 0.3s;
+}
+.button.active { color: #4bc0c0; }
+.navbar img, .nav-icon { width: 24px; height: 24px; margin-bottom: 4px; font-size: 20px; filter: invert(0.4); }
+.button.active img { filter: invert(0.8) sepia(1) saturate(3) hue-rotate(120deg); }
+.button.active .nav-icon { filter: none; }
+.nav1 { font-size: 0.65em; letter-spacing: 1px; font-family: 'Oswald', sans-serif; }
+
+@keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.5;} 100% {opacity: 1;} }

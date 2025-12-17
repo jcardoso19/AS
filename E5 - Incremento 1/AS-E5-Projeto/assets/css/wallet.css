@@ -1,148 +1,137 @@
-/* --- RESET GLOBAL --- */
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+@import url('https://fonts.googleapis.com/css?family=Oswald:300,400,600');
 
-@import url('https://fonts.googleapis.com/css?family=Oswald:400,500');
+/* Reset Básico */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body {
     margin: 0; padding: 0;
-    /* Fundo claro igual à página do Mapa */
-    background: #f0f2f5;
+    background: #121212;
+    color: #fff;
     font-family: 'Oswald', sans-serif;
-    min-height: 100vh;
-    display: block; 
-    padding-bottom: 80px; /* Espaço para a navbar */
+    padding-bottom: 90px; /* Espaço para a navbar */
 }
 
-/* --- BOTTOM NAVBAR --- */
-.navbar {
-    position: fixed; bottom: 0; left: 0;
-    width: 100%; height: 70px;
-    
-    /* MUDANÇA: Fundo Branco */
-    background: #ffffff;
-    border-top: 1px solid #e5e7eb;
-    
-    display: flex; justify-content: space-around; align-items: center;
-    z-index: 9999;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-}
-
-.navigation { display: flex; flex: 1; justify-content: center; }
-
-.button {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: none; border: none;
-    
-    /* MUDANÇA: Cinzento por defeito */
-    color: #6b7280;
-    
-    width: 100%; height: 100%; text-decoration: none;
-    transition: color 0.2s;
-}
-
-/* Filtro base para cinzento */
-.navbar img { 
-    width: 24px; height: 24px; margin-bottom: 4px; 
-    filter: invert(40%) sepia(8%) saturate(544%) hue-rotate(186deg) brightness(96%) contrast(88%);
-}
-
-.nav1 { font-size: 0.7em; letter-spacing: 0.5px; font-weight: 500; }
-
-/* HOVER ou ATIVO (Wallet) */
-.button:hover, .button[href="wallet.html"] { 
-    /* MUDANÇA: Azul MultiPower */
-    color: #2563EB; 
-}
-
-/* Filtro para Azul quando ativo/hover */
-.button:hover img, .button[href="wallet.html"] img { 
-    filter: invert(31%) sepia(87%) saturate(2548%) hue-rotate(213deg) brightness(96%) contrast(92%);
-}
-
-/* --- CONTEÚDO PRINCIPAL --- */
-.main-content {
-    width: 100%;
-    max-width: 500px;
-    margin: 0 auto;
-    padding-top: 30px; 
-    display: flex; flex-direction: column; align-items: center; gap: 20px;
+.wallet-container {
+    padding: 20px;
 }
 
 /* --- CARTÃO DE SALDO --- */
-.wallet-card {
-    /* MUDANÇA: Branco com sombra suave */
-    background: #ffffff;
+.balance-card {
+    background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+    border: 1px solid #333;
     border-radius: 20px;
-    padding: 30px;
-    width: 90%;
+    padding: 25px;
     text-align: center;
-    position: relative;
-    border: none;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Sombra moderna */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-bottom: 30px;
 }
 
-/* Texto do Saldo */
-.wallet-balance { 
-    font-size: 3.5em; 
-    /* MUDANÇA: Azul */
-    color: #2563EB; 
-    font-weight: 500; 
-    margin: 15px 0; 
+.balance-card h2 {
+    margin: 0 0 10px;
+    font-size: 1.2em;
+    color: #888;
+    font-weight: 300;
 }
 
-.wallet-label { 
-    color: #6b7280; /* Cinzento escuro */
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    font-size: 0.9em;
+.balance-amount {
+    font-size: 3em;
+    font-weight: 600;
+    color: #4bc0c0; /* Cor de destaque da App */
 }
 
-/* --- BOTÃO ADICIONAR SALDO (+) --- */
-#add-balance-btn {
-    position: absolute; top: 15px; right: 15px;
-    width: 40px; height: 40px;
-    
-    /* MUDANÇA: Azul com ícone branco */
-    background: #2563EB; 
-    
-    border-radius: 50%; border: none;
-    display: flex; align-items: center; justify-content: center;
+/* --- BOTÕES DE AÇÃO --- */
+.actions-grid {
+    display: flex;
+    justify-content: space-around;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.action-btn {
+    flex: 1;
+    background: #1e1e1e;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 15px;
+    padding: 15px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
-    transition: transform 0.2s, background 0.2s;
+    transition: background 0.2s;
 }
 
-#add-balance-btn:hover {
-    background: #1e40af;
-    transform: scale(1.05);
+.action-btn:hover {
+    background: #2a2a2a;
 }
 
-#add-balance-btn img { 
-    width: 20px; height: 20px; 
-    filter: invert(1); /* Ícone branco */
+.action-btn .icon {
+    font-size: 1.8em;
+    margin-bottom: 5px;
+    color: #4bc0c0;
 }
 
-/* --- GRÁFICOS --- */
-.charts-container { 
-    width: 90%; 
-    display: flex; flex-direction: column; gap: 20px; 
+.action-btn span {
+    font-size: 0.9em;
+    font-weight: 400;
 }
 
-.chart-card {
-    /* MUDANÇA: Branco */
-    background: #ffffff; 
-    border-radius: 20px;
-    padding: 20px; 
-    border: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+/* --- HISTÓRICO DE TRANSAÇÕES --- */
+.transactions-list h3 {
+    margin: 0 0 15px;
+    font-size: 1.2em;
+    border-left: 3px solid #4bc0c0;
+    padding-left: 10px;
+    font-weight: 400;
 }
 
-.chart-card h2 { 
-    /* MUDANÇA: Azul Escuro */
-    color: #1E40AF; 
-    font-size: 1.2em; 
-    margin-top: 0; 
-    margin-bottom: 15px;
+.transaction-item {
+    background: #1e1e1e;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #333;
 }
 
-canvas { width: 100% !important; height: auto !important; }
+.trans-info {
+    flex-grow: 1;
+}
+
+.trans-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.trans-date {
+    font-size: 0.8em;
+    color: #888;
+}
+
+.trans-amount {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.amount-debit { color: #e74c3c; } /* Vermelho para gastos */
+.amount-credit { color: #2ecc71; } /* Verde para recargas */
+
+
+/* --- NAVBAR (Cópia para garantir a formatação da Navbar) --- */
+.navbar {
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 75px;
+    background: #1e1e1e; border-top: 1px solid #333;
+    display: flex; justify-content: space-around; align-items: center; z-index: 1000;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+}
+.navigation { display: flex; flex: 1; justify-content: center; }
+.button {
+    display: flex; flex-direction: column; align-items: center;
+    background: none; border: none; color: #666; text-decoration: none;
+}
+.navbar img, .nav-icon { width: 24px; height: 24px; margin-bottom: 4px; filter: invert(0.6); }
+.button.active { color: #4bc0c0; }
+.button.active img { filter: invert(0.8) sepia(1) saturate(3) hue-rotate(120deg); }
+.nav1 { font-size: 0.7em; letter-spacing: 1px; font-family: 'Oswald', sans-serif; }

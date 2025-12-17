@@ -50,6 +50,44 @@ router.post('/chat', async (req, res) => {
         }
     }
 });
+// --- ROTA PARA CARREGAR SALDO ---
+router.post('/adicionar-saldo', (req, res) => {
+    const { email, valor, metodo } = req.body;
+    const valorNumerico = parseFloat(valor);
+
+    if (isNaN(valorNumerico) || valorNumerico <= 0) {
+        return res.status(400).json({ error: "Valor inválido." });
+    }
+
+    db.get("SELECT id FROM users WHERE email = ?", [email], (err, user) => {
+        if (err) {
+            console.error("Erro SQL ao buscar utilizador:", err);
+            return res.status(500).json({ error: "Erro interno do servidor." });
+        }
+        if (!user) {
+            return res.status(404).json({ error: "Utilizador não encontrado. Verifica o email." });
+        }
+
+        // 1. Atualizar o saldo na tabela wallets
+        db.run("UPDATE wallets SET saldo = saldo + ? WHERE user_id = ?", [valorNumerico, user.id], (err) => {
+            if (err) {
+                console.error("Erro SQL ao atualizar saldo:", err);
+                return res.status(500).json({ error: "Erro ao atualizar o saldo na base de dados." });
+            }
+
+            // 2. Registar a transação (tipo 'Carregamento')
+            const sqlTrans = `INSERT INTO transactions (user_id, tipo, estacao, valor, detalhes) VALUES (?, ?, ?, ?, ?)`;
+            const detalhes = `Via ${metodo}`;
+            
+            // Usamos o valor positivo (valorNumerico) pois é um crédito
+            db.run(sqlTrans, [user.id, 'Carregamento', 'Carteira', valorNumerico, detalhes], function(err) {
+                if (err) console.error("Erro SQL ao registar carregamento:", err);
+                
+                res.json({ success: true, valor_adicionado: valorNumerico });
+            });
+        });
+    });
+});
 
 // --- ROTA DE CANCELAMENTO ---
 router.post('/cancelar-transacao', (req, res) => {

@@ -4,24 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Wallet - MultiPower</title>
-    <link rel="stylesheet" href="assets/css/wallet.css">
-    <style>
-        /* Ajuste simples para a navbar funcionar nesta página */
-        .navbar {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 75px;
-            background: #1e1e1e; border-top: 1px solid #333;
-            display: flex; justify-content: space-around; align-items: center; z-index: 1000;
-        }
-        .navigation { display: flex; flex: 1; justify-content: center; }
-        .button { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #888; background:none; border:none;}
-        .navbar img, .nav-icon { width: 24px; height: 24px; margin-bottom: 4px; filter: invert(0.6); }
-        .nav1 { font-size: 0.7em; letter-spacing: 1px; font-family: 'Oswald', sans-serif; }
-    </style>
+    
+    <link rel="stylesheet" href="assets/css/wallet.css"> 
+
     <script src="assets/js/wallet.js" defer></script>
 </head>
 <body>
     
     <div class="wallet-container">
+        
         <div class="balance-card">
             <h2>Saldo Atual</h2>
             <div class="balance-amount" id="balance-display">0.00€</div>
@@ -30,7 +21,7 @@
         <div class="actions-grid">
             <button class="action-btn" onclick="addFunds()">
                 <div class="icon">➕</div>
-                <span>Carregar</span>
+                <span>Carregar Saldo</span>
             </button>
             <button class="action-btn">
                 <div class="icon">📅</div>
@@ -38,13 +29,15 @@
             </button>
             <button class="action-btn">
                 <div class="icon">💳</div>
-                <span>Cartões</span>
+                <span>Gerir Cartões</span>
             </button>
         </div>
 
         <div class="transactions-list">
-            <h3>Últimos Movimentos</h3>
-            <div style="text-align:center; color:#666; margin-top:20px;">Sem movimentos recentes.</div>
+            <h3>Movimentos Recentes</h3>
+            <div id="transactions-feed">
+                <p style="text-align:center; color:#666; margin-top:20px;">A carregar movimentos...</p>
+            </div>
         </div>
     </div>
 

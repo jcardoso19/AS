@@ -1,10 +1,23 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 
-const dbPath = path.resolve(__dirname, 'db/users.db');
+// Garante que a pasta 'db' existe (Crítico para o Render)
+const dbFolder = path.resolve(__dirname, 'db');
+if (!fs.existsSync(dbFolder)){
+    fs.mkdirSync(dbFolder);
+}
+
+const dbPath = path.resolve(dbFolder, 'users.db');
 const db = new sqlite3.Database(dbPath);
 
 db.serialize(() => {
+  // Limpeza (Descomenta estas linhas se quiseres apagar tudo sempre que correres o script)
+  // db.run("DROP TABLE IF EXISTS transactions");
+  // db.run("DROP TABLE IF EXISTS cars");
+  // db.run("DROP TABLE IF EXISTS wallets");
+  // db.run("DROP TABLE IF EXISTS users");
+
   // 1. Utilizadores
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,11 +43,11 @@ db.serialize(() => {
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
 
-  // 4. HISTÓRICO DE TRANSAÇÕES (NOVO)
+  // 4. Histórico
   db.run(`CREATE TABLE IF NOT EXISTS transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
-    tipo TEXT, -- 'Reserva', 'Carregamento', 'Saldo'
+    tipo TEXT, 
     estacao TEXT,
     valor REAL,
     data DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -42,17 +55,24 @@ db.serialize(() => {
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
 
-  // Dados de Exemplo
-  db.run(`INSERT OR IGNORE INTO users (nome, email, password, co2_saved, points) VALUES ('Cliente', 'cliente@multipower.pt', '1234', 120.5, 500)`);
+  // DADOS INICIAIS PARA A APRESENTAÇÃO
+  // Criamos o user com 0 CO2 e 0 Pontos para a demo parecer real
+  db.run(`INSERT OR IGNORE INTO users (nome, apelido, email, password, co2_saved, points) 
+          VALUES ('Cliente', 'Demo', 'cliente@multipower.pt', '1234', 0.0, 0)`);
   
   db.get("SELECT id FROM users WHERE email = 'cliente@multipower.pt'", (err, user) => {
     if(user) {
-      db.run(`INSERT OR IGNORE INTO wallets (user_id, saldo) VALUES (?, 50.00)`, [user.id]);
+      // Começamos com 10.00€ para poderes testar uma reserva imediata
+      db.run(`INSERT OR IGNORE INTO wallets (user_id, saldo) VALUES (?, 10.00)`, [user.id]);
+      
+      // NOTA: Comentei a inserção do carro para que a garagem apareça vazia na demo
+      /*
       db.run(`INSERT INTO cars (user_id, marca, modelo, ano, matricula, cor, battery_size, connection_type) 
               SELECT ?, 'Tesla', 'Model 3', '2023', 'AA-00-EV', 'Branco', 75.0, 33
               WHERE NOT EXISTS (SELECT 1 FROM cars WHERE user_id = ?)`, [user.id, user.id]);
+      */
     }
   });
 
-  console.log("Base de dados recriada com tabela de Transações!");
+  console.log("✅ Base de dados preparada para o deploy!");
 });

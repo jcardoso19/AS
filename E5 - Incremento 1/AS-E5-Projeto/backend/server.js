@@ -1,31 +1,28 @@
 const express = require('express');
 const cors = require('cors');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const path = require('path');
 
 const app = express();
-const port = 3000;
 
-// --- CONFIGURAÇÃO DA IA ---
-// Confirma que a chave é do AI Studio: https://aistudio.google.com/app/apikey
-const GOOGLE_API_KEY = "AIzaSyDBuFS2iujIr-P6ALX6CJ1RFc-Zx9upw5c"; 
+const port = process.env.PORT || 3000;
+const GOOGLE_API_KEY = process.env.GEMINI_API_KEY || "AIzaSyDBuFS2iujIr-P6ALX6CJ1RFc-Zx9upw5c"; 
 
 const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
-
-// Com a biblioteca atualizada, este modelo DEVE funcionar
-const model = genAI.getGenerativeModel({ model: "models/gemini-2.5-flash" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
 app.use(cors());
 app.use(express.json());
 
-// --- ROTAS EXISTENTES ---
+app.use(express.static(path.join(__dirname, '../'))); 
+
 const authRoutes = require('./routes/auth');
 app.use('/api', authRoutes);
 
-// --- ROTA DO CHAT ---
 app.post('/api/chat', async (req, res) => {
     try {
         const { message } = req.body;
-        console.log("Recebi mensagem:", message);
+        console.log("Mensagem recebida:", message);
 
         const prompt = `Tu és o assistente da MultiPower. Responde de forma curta e amigável em PT.
         Utilizador: ${message}`;
@@ -37,11 +34,10 @@ app.post('/api/chat', async (req, res) => {
         res.json({ reply: text });
     } catch (error) {
         console.error("Erro na IA:", error);
-        // Envia o erro técnico para o chat para vermos se mudou
-        res.status(500).json({ reply: `Erro técnico: ${error.message}` });
+        res.status(500).json({ reply: "Desculpa, estou com dificuldades técnicas agora. Tenta daqui a pouco!" });
     }
 });
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`Servidor a correr na porta ${port}`);
 });
