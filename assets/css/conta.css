@@ -1,0 +1,252 @@
+/* --- RESET & GLOBAL --- */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+@import url('https://fonts.googleapis.com/css?family=Oswald:300,400,600');
+
+body {
+    margin: 0; padding: 0;
+    background: #121212; /* Fundo mais profundo */
+    font-family: 'Oswald', sans-serif;
+    color: #fff;
+    min-height: 100vh;
+    padding-bottom: 90px; /* Espaço para a navbar */
+    overflow-x: hidden;
+}
+
+/* --- HEADER DE PERFIL --- */
+.profile-header {
+    background: linear-gradient(160deg, #1e1e1e 0%, #101010 100%);
+    padding: 50px 20px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    position: relative;
+}
+
+/* Círculo da foto com efeito de brilho */
+.profile-avatar-wrapper {
+    position: relative;
+    margin-bottom: 15px;
+}
+.profile-image {
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #4bc0c0;
+    box-shadow: 0 0 25px rgba(75, 192, 192, 0.3);
+    background: #000;
+}
+
+.profile-name { font-size: 1.8em; font-weight: 600; letter-spacing: 1px; color: #fff; margin: 0; }
+.profile-email { color: #888; font-size: 0.9em; margin-top: 5px; font-weight: 300; }
+
+/* --- ESTATÍSTICAS (GAMIFICATION) --- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    width: 90%;
+    max-width: 450px;
+    margin: -25px auto 20px; /* Sobrepõe ligeiramente o header */
+    position: relative;
+    z-index: 10;
+}
+
+.stat-card {
+    background: #252525;
+    border-radius: 16px;
+    padding: 15px;
+    text-align: center;
+    border: 1px solid #333;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    display: flex; flex-direction: column; justify-content: center;
+}
+
+.stat-value { font-size: 1.6em; color: #4bc0c0; font-weight: bold; line-height: 1.2; }
+.stat-label { font-size: 0.75em; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-top: 5px; }
+
+/* --- TÍTULOS DE SECÇÃO --- */
+.section-header {
+    width: 90%; max-width: 450px; margin: 25px auto 15px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.section-title { font-size: 1.2em; color: #fff; font-weight: normal; border-left: 3px solid #4bc0c0; padding-left: 10px; }
+
+/* Botão "Adicionar" pequeno */
+.btn-mini-add {
+    background: rgba(75, 192, 192, 0.1);
+    color: #4bc0c0;
+    border: 1px solid #4bc0c0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+.btn-mini-add:active { background: #4bc0c0; color: #000; }
+
+/* --- LISTA DA GARAGEM --- */
+#garage-list {
+    width: 90%; max-width: 450px; margin: 0 auto;
+    display: flex; flex-direction: column; gap: 15px;
+}
+
+/* Cartão do Carro */
+.car-card {
+    background: linear-gradient(145deg, #2a2a2a, #232323);
+    border-radius: 16px;
+    padding: 15px 20px;
+    display: flex; align-items: center;
+    border: 1px solid #333;
+    position: relative;
+    overflow: hidden;
+}
+.car-card::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #4bc0c0;
+}
+
+.car-icon-box {
+    font-size: 2em; margin-right: 15px;
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));
+}
+
+.car-info { flex: 1; }
+.car-name { font-size: 1.2em; font-weight: bold; color: #fff; display: block; margin-bottom: 4px; }
+.car-meta { font-size: 0.85em; color: #999; display: flex; gap: 10px; }
+.car-tag { background: #1a1a1a; padding: 2px 6px; border-radius: 4px; border: 1px solid #444; }
+
+.btn-delete {
+    background: none; border: none; color: #e74c3c;
+    font-size: 1.2em; opacity: 0.5; padding: 10px; cursor: pointer;
+}
+.btn-delete:active { opacity: 1; transform: scale(1.1); }
+
+/* --- MENU DE OPÇÕES (Lista) --- */
+.menu-list {
+    width: 90%; max-width: 450px; margin: 0 auto;
+    background: #252525; border-radius: 16px;
+    overflow: hidden; border: 1px solid #333;
+}
+.menu-item {
+    padding: 18px 20px;
+    border-bottom: 1px solid #333;
+    display: flex; align-items: center;
+    cursor: pointer; color: #eee;
+    font-size: 1.1em;
+}
+.menu-item:last-child { border-bottom: none; }
+.menu-item:active { background: #333; }
+.menu-icon { margin-right: 15px; font-size: 1.2em; width: 25px; text-align: center; }
+.menu-arrow { margin-left: auto; color: #555; font-size: 1.2em; }
+
+/* --- BOTTOM SHEET (MODAL DESLIZANTE) --- */
+.overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); z-index: 2000;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    backdrop-filter: blur(4px);
+}
+.overlay.active { opacity: 1; pointer-events: all; }
+
+.bottom-sheet {
+    position: fixed; bottom: 0; left: 0; width: 100%;
+    background: #1e1e1e;
+    border-radius: 25px 25px 0 0;
+    padding: 10px 25px 40px;
+    transform: translateY(100%); 
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 2001;
+    border-top: 1px solid #333;
+    max-height: 85vh; overflow-y: auto;
+}
+.bottom-sheet.active { transform: translateY(0); }
+
+/* Pega para arrastar (visual) */
+.sheet-handle {
+    width: 40px; height: 5px; background: #444;
+    border-radius: 10px; margin: 10px auto 25px;
+}
+
+/* Formulários */
+h2 { margin-top: 0; color: #fff; font-weight: normal; text-align: center; margin-bottom: 20px; }
+
+.form-group { margin-bottom: 15px; }
+.form-label { display: block; color: #888; font-size: 0.9em; margin-bottom: 8px; margin-left: 5px; }
+
+input, select {
+    width: 100%; padding: 14px;
+    background: #2a2a2a; border: 1px solid #444;
+    border-radius: 12px; color: #fff;
+    font-size: 1em; font-family: 'Oswald', sans-serif;
+    outline: none; transition: border-color 0.2s;
+}
+input:focus, select:focus { border-color: #4bc0c0; background: #333; }
+
+.btn-primary {
+    width: 100%; background: #4bc0c0; color: #000;
+    border: none; padding: 16px; border-radius: 12px;
+    font-size: 1.1em; font-weight: bold; margin-top: 20px;
+    cursor: pointer; text-transform: uppercase; letter-spacing: 1px;
+}
+
+/* NAVBAR (Cópia para consistência) */
+.navbar {
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
+    background: #1e1e1e; border-top: 1px solid #333;
+    display: flex; justify-content: space-around; align-items: center;
+    z-index: 1000; box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+}
+.navigation { display: flex; flex: 1; justify-content: center; }
+.button {
+    display: flex; flex-direction: column; align-items: center;
+    background: none; border: none; color: #888; text-decoration: none;
+}
+.navbar img { width: 24px; height: 24px; margin-bottom: 4px; filter: invert(0.6); }
+.nav1 { font-size: 0.7em; letter-spacing: 1px; }
+
+/* --- HISTÓRICO DE TRANSAÇÕES --- */
+.trans-item {
+    background: #2a2a2a;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #333;
+}
+
+.trans-info { flex: 1; }
+.trans-title { font-weight: bold; color: #fff; font-size: 1em; margin-bottom: 4px; }
+.trans-date { color: #888; font-size: 0.8em; }
+
+.trans-actions {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.trans-price { font-weight: bold; font-size: 1.1em; }
+.text-green { color: #2ecc71; } /* Cor de reembolso */
+.text-red { color: #e74c3c; }   /* Cor de gasto */
+
+/* Botão de Cancelar Pequeno */
+.btn-cancel-mini {
+    background: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+    padding: 4px 10px;
+    border-radius: 15px;
+    font-size: 0.75em;
+    cursor: pointer;
+    font-family: 'Oswald', sans-serif;
+    transition: all 0.2s;
+}
+
+.btn-cancel-mini:hover {
+    background: #e74c3c;
+    color: #fff;
+}
