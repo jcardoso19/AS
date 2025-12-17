@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Tenta obter o email do utilizador logado, caso contrário usa o de teste
     const email = localStorage.getItem('email') || 'cliente@multipower.pt';
     carregarDadosWallet(email);
 });
@@ -6,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
 async function carregarDadosWallet(email) {
     // 1. Carregar Saldo
     try {
-        const resWallet = await fetch(`http://localhost:3000/api/wallet/${email}`);
+        // CORREÇÃO: Usar caminho relativo /api para funcionar no Render
+        const resWallet = await fetch(`/api/wallet/${email}`);
         const wallet = await resWallet.json();
         document.getElementById('balance-display').textContent = `${(wallet.saldo || 0).toFixed(2)}€`;
     } catch(e) { 
@@ -16,7 +18,8 @@ async function carregarDadosWallet(email) {
     
     // 2. Carregar Transações
     try {
-        const resTrans = await fetch(`http://localhost:3000/api/transacoes/${email}`);
+        // CORREÇÃO: Usar caminho relativo /api para funcionar no Render
+        const resTrans = await fetch(`/api/transacoes/${email}`);
         if (!resTrans.ok) throw new Error("Falha ao buscar transações");
         const transacoes = await resTrans.json();
         renderTransacoes(transacoes);
@@ -91,7 +94,8 @@ window.addFunds = async function() {
     }
 
     try {
-        const response = await fetch('http://localhost:3000/api/adicionar-saldo', {
+        // CORREÇÃO: Usar caminho relativo /api para funcionar no Render
+        const response = await fetch('/api/adicionar-saldo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 

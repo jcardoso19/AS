@@ -16,15 +16,15 @@ const MY_LAT = 40.6700;
 const MY_LNG = -73.9400;
 
 window.onload = async function() {
-    console.log("A iniciar aplicação...");
+    console.log("A iniciar aplicação MultiPower...");
     
-    // 1. Limpeza de segurança
+    // 1. Limpeza de segurança para o Leaflet
     var container = L.DomUtil.get('map');
     if(container != null){
         container._leaflet_id = null;
     }
 
-    // 2. Inicializar Mapa
+    // 2. Inicializar Mapa (Tema Dark)
     map = L.map('map', { zoomControl: false }).setView([MY_LAT, MY_LNG], 14);
     
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -35,15 +35,13 @@ window.onload = async function() {
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // --- NOVA FUNCIONALIDADE: CARREGAR AO MOVER ---
-    // Sempre que o utilizador parar de mexer o mapa, carregamos novas estações
+    // --- CARREGAR AO MOVER ---
     map.on('moveend', function() {
         const centro = map.getCenter();
-        // Carrega estações num raio de 10km do novo centro
         carregarEstacoes({ lat: centro.lat, lng: centro.lng });
     });
 
-    // --- EVENTO: LIMPAR ROTA AO FECHAR POPUP ---
+    // --- LIMPAR ROTA AO FECHAR POPUP ---
     map.on('popupclose', function(e) {
         if (coordenadasReservaAtiva) {
             desenharRota(coordenadasReservaAtiva.lat, coordenadasReservaAtiva.lng);
@@ -52,7 +50,7 @@ window.onload = async function() {
         }
     });
 
-    // --- PONTO "EU" ---
+    // --- PONTO DO UTILIZADOR ---
     const userIcon = L.divIcon({
         className: 'user-pin-marker', 
         html: `<div class="pulsing-dot"></div>`,
@@ -64,7 +62,7 @@ window.onload = async function() {
      .addTo(map)
      .bindPopup("<b>📍 Você está aqui</b>");
 
-    // 3. Inicializar Routing
+    // 3. Inicializar Routing (Leaflet Routing Machine)
     if (typeof L.Routing !== 'undefined') {
         control = L.Routing.control({
             waypoints: [],
@@ -76,18 +74,17 @@ window.onload = async function() {
         }).addTo(map);
     }
 
-    // 4. Carregar Dados Iniciais
+    // 4. Carregar Dados Iniciais (Caminhos Relativos para o Render)
     localStorage.setItem('email', 'cliente@multipower.pt');
     
     await carregarCarros();
     await carregarSaldo();
     await carregarMinhasReservas();
     
-    // Carrega pontos iniciais
     adicionarEstacoesTeste(); 
     carregarEstacoes({ lat: MY_LAT, lng: MY_LNG });
     
-    // Listeners
+    // Listeners do seletor de carros
     const carSelect = document.getElementById('car-select');
     if(carSelect) {
         carSelect.addEventListener('change', (e) => {
@@ -119,7 +116,8 @@ function desenharRota(destLat, destLng) {
 async function carregarMinhasReservas() {
     try {
         const email = localStorage.getItem('email');
-        const res = await fetch(`http://localhost:3000/api/transacoes/${email}`);
+        // CORREÇÃO: Caminho relativo para o Render
+        const res = await fetch(`/api/transacoes/${email}`);
         const transacoes = await res.json();
         minhasReservas = transacoes.filter(t => t.tipo === 'Reserva' && !t.detalhes.includes('[CANCELADO]'));
     } catch(e) { console.error("Erro reservas:", e); }
@@ -142,38 +140,38 @@ function adicionarEstacoesTeste() {
 
 async function carregarCarros() {
     try {
-        const resp = await fetch(`http://localhost:3000/api/carros/${localStorage.getItem('email')}`);
+        // CORREÇÃO: Caminho relativo para o Render
+        const resp = await fetch(`/api/carros/${localStorage.getItem('email')}`);
         carros = await resp.json();
         const select = document.getElementById('car-select');
-        select.innerHTML = '';
-        if(carros.length > 0) {
-            carros.forEach((c, index) => {
-                const opt = document.createElement('option');
-                opt.value = c.id; opt.text = `${c.marca} ${c.modelo}`;
-                select.add(opt);
-                if(index === 0) carroSelecionado = c;
-            });
-        } else { select.innerHTML = '<option>Sem carros</option>'; }
-    } catch(e) {}
+        if(select) {
+            select.innerHTML = '';
+            if(carros.length > 0) {
+                carros.forEach((c, index) => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id; opt.text = `${c.marca} ${c.modelo}`;
+                    select.add(opt);
+                    if(index === 0) carroSelecionado = c;
+                });
+            } else { select.innerHTML = '<option>Sem carros</option>'; }
+        }
+    } catch(e) { console.error("Erro carros:", e); }
 }
 
 async function carregarSaldo() {
     try {
-        const resp = await fetch(`http://localhost:3000/api/wallet/${localStorage.getItem('email')}`);
+        // CORREÇÃO: Caminho relativo para o Render
+        const resp = await fetch(`/api/wallet/${localStorage.getItem('email')}`);
         const data = await resp.json();
         saldo = data.saldo || 0;
         document.getElementById('saldo-display').textContent = `${saldo.toFixed(2)}€`;
     } catch(e) {}
 }
 
-// --- CARREGAR ESTAÇÕES DA API ---
 async function carregarEstacoes(centro) {
     try {
-        // Aumentei a distância para 10km e o limite para 50 estações
         const response = await fetch(`https://api.openchargemap.io/v3/poi/?output=json&countrycode=US&latitude=${centro.lat}&longitude=${centro.lng}&maxresults=50&distance=10&compact=true&verbose=false&key=1b6229d7-8a8d-4e66-9d0f-2e101e00f789`);
         const data = await response.json();
-        
-        // Adiciona novos marcadores ao mapa
         data.forEach(poi => adicionarMarcador(poi));
     } catch (e) { console.log("Erro API:", e); }
 }
@@ -183,10 +181,8 @@ function adicionarMarcador(poi) {
     const lat = poi.AddressInfo.Latitude;
     const lon = poi.AddressInfo.Longitude;
     
-    // Verifica reserva
     const jaReservado = minhasReservas.some(r => r.estacao === poi.AddressInfo.Title);
     
-    // Guarda coordenadas se for a nossa reserva ativa
     if (jaReservado) {
         coordenadasReservaAtiva = { lat: lat, lng: lon };
         setTimeout(() => desenharRota(lat, lon), 1000); 
@@ -204,7 +200,6 @@ function adicionarMarcador(poi) {
     const marker = L.marker([lat, lon], { icon: icon }).addTo(map);
 
     marker.on('click', () => {
-        // Ao clicar, desenha rota temporária
         desenharRota(lat, lon);
         mostrarPopup(poi);
     });
@@ -222,9 +217,7 @@ function mostrarPopup(poi) {
         html = `
             <div style="font-family:'Oswald',sans-serif; text-align:center; min-width:200px;">
                 <h3 style="margin:0; color:#333;">${nomeEstacao}</h3>
-                <div style="background:#fff3cd; color:#856404; padding:5px; border-radius:5px; margin:10px 0; font-size:0.9em;">
-                    ⚠️ Reserva Ativa
-                </div>
+                <div style="background:#fff3cd; color:#856404; padding:5px; border-radius:5px; margin:10px 0; font-size:0.9em;">⚠️ Reserva Ativa</div>
                 <p style="font-size:0.8em; color:#666;">Tempo: <b>${tempoViagemMinutos} min</b></p>
                 <button onclick="cancelarReservaDoMapa(${reservaAtiva.id})" 
                     style="width:100%; background:#e74c3c; color:white; border:none; padding:10px; border-radius:5px; font-weight:bold; cursor:pointer;">
@@ -261,10 +254,7 @@ function mostrarPopup(poi) {
         `;
     }
 
-    L.popup({ offset: [0, -10] })
-        .setLatLng([lat, lng])
-        .setContent(html)
-        .openOn(map);
+    L.popup({ offset: [0, -10] }).setLatLng([lat, lng]).setContent(html).openOn(map);
 }
 
 // --- FUNÇÕES GLOBAIS ---
@@ -273,7 +263,8 @@ window.cancelarReservaDoMapa = async function(id) {
     if(!confirm("Cancelar reserva? Taxa: 1.50€")) return;
 
     try {
-        const response = await fetch('http://localhost:3000/api/cancelar-transacao', {
+        // CORREÇÃO: Caminho relativo para o Render
+        const response = await fetch('/api/cancelar-transacao', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: id, user_email: localStorage.getItem('email') })
@@ -281,14 +272,6 @@ window.cancelarReservaDoMapa = async function(id) {
         const res = await response.json();
         if (response.ok) {
             alert(`✅ Cancelado. Reembolso: ${res.reembolso.toFixed(2)}€`);
-            map.closePopup();
-            
-            // LIMPAR ROTA E RESERVA ATIVA
-            coordenadasReservaAtiva = null; 
-            control.setWaypoints([]); 
-            
-            await carregarSaldo();
-            await carregarMinhasReservas();
             location.reload(); 
         } else {
             alert("Erro: " + res.error);
@@ -328,7 +311,8 @@ window.confirmarTransacao = async function() {
     btn.disabled = true;
 
     try {
-        const response = await fetch('http://localhost:3000/api/confirmar-pagamento', {
+        // CORREÇÃO: Caminho relativo para o Render
+        const response = await fetch('/api/confirmar-pagamento', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -345,8 +329,6 @@ window.confirmarTransacao = async function() {
 
         if (response.ok) {
             alert(`✅ Confirmado!`);
-            fecharPagamento();
-            await carregarSaldo(); 
             location.reload(); 
         } else {
             alert("❌ Erro: " + res.error);
