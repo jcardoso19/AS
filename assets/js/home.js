@@ -1,31 +1,26 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const email = localStorage.getItem('email') || 'cliente@multipower.pt';
-    
-    // 1. Data de Hoje
     const options = { weekday: 'long', day: 'numeric', month: 'long' };
     const dataHoje = new Date().toLocaleDateString('pt-PT', options);
     document.getElementById('current-date').textContent = dataHoje.charAt(0).toUpperCase() + dataHoje.slice(1);
 
-    // 2. Carregar Dados
     await carregarDadosUsuario(email);
-
-    // 3. Gráfico e Notícias
     renderMarketChart();
     renderNews();
 });
 
 async function carregarDadosUsuario(email) {
     try {
-        // Buscar Perfil
-        const resPerfil = await fetch(`http://localhost:3000/api/perfil/${email}`);
+        // CORREÇÃO: Removido localhost
+        const resPerfil = await fetch(`/api/perfil/${email}`);
         const user = await resPerfil.json();
         if(user.nome) {
             document.getElementById('user-greeting').textContent = `Olá, ${user.nome}!`;
             document.getElementById('co2-val').textContent = (user.co2_saved || 0).toFixed(1);
         }
 
-        // Buscar Saldo
-        const resWallet = await fetch(`http://localhost:3000/api/wallet/${email}`);
+        // CORREÇÃO: Removido localhost
+        const resWallet = await fetch(`/api/wallet/${email}`);
         const wallet = await resWallet.json();
         document.getElementById('wallet-val').textContent = `${(wallet.saldo || 0).toFixed(2)}€`;
 
@@ -35,8 +30,6 @@ async function carregarDadosUsuario(email) {
 function renderMarketChart() {
     const ctx = document.getElementById('marketChart');
     if(!ctx) return;
-
-    // Gradiente verde
     const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 200);
     gradient.addColorStop(0, 'rgba(75, 192, 192, 0.4)');
     gradient.addColorStop(1, 'rgba(75, 192, 192, 0.0)');
@@ -52,7 +45,6 @@ function renderMarketChart() {
                 backgroundColor: gradient,
                 borderWidth: 2,
                 pointRadius: 0,
-                pointHoverRadius: 4,
                 fill: true,
                 tension: 0.4
             }]
@@ -71,7 +63,6 @@ function renderMarketChart() {
 
 function renderNews() {
     const feed = document.getElementById('news-feed');
-    // Notícias Simuladas
     const newsData = [
         {
             source: "CNN Portugal",

@@ -5,14 +5,12 @@ document.addEventListener('DOMContentLoaded', function () {
     carregarPerfil(email);
     carregarGaragem(email);
     setupAddCarForm(email);
-    
-    // NOTA: openTransactions() é chamado via onclick no HTML, não aqui.
 });
 
-// --- PERFIL & GARAGEM (MANTÉM IGUAL) ---
 async function carregarPerfil(email) {
     try {
-        const res = await fetch(`http://localhost:3000/api/perfil/${email}`);
+        // CORREÇÃO: Removido localhost
+        const res = await fetch(`/api/perfil/${email}`);
         const user = await res.json();
         if (user.nome) {
             document.querySelector('.profile-name').textContent = `${user.nome} ${user.apelido || ''}`;
@@ -27,7 +25,8 @@ async function carregarPerfil(email) {
 
 async function carregarGaragem(email) {
     try {
-        const res = await fetch(`http://localhost:3000/api/carros/${email}`);
+        // CORREÇÃO: Removido localhost
+        const res = await fetch(`/api/carros/${email}`);
         const carros = await res.json();
         const lista = document.getElementById('garage-list');
         lista.innerHTML = '';
@@ -61,8 +60,6 @@ async function carregarGaragem(email) {
     } catch(e) { console.error("Erro ao carregar garagem:", e); }
 }
 
-// --- FUNÇÃO DE TRANSAÇÕES E CANCELAMENTO (MELHORADA) ---
-
 window.openTransactions = async function() {
     const container = document.getElementById('reservations-container');
     container.innerHTML = '<p style="text-align:center; color:#888;">A carregar histórico...</p>';
@@ -71,7 +68,8 @@ window.openTransactions = async function() {
 
     try {
         const email = localStorage.getItem('email');
-        const res = await fetch(`http://localhost:3000/api/transacoes/${email}`);
+        // CORREÇÃO: Removido localhost
+        const res = await fetch(`/api/transacoes/${email}`);
         const transacoes = await res.json();
 
         container.innerHTML = '';
@@ -82,7 +80,6 @@ window.openTransactions = async function() {
         }
 
         transacoes.forEach(t => {
-            // Lógica para determinar o estado e o valor
             const isRefund = t.tipo === 'Reembolso' || t.valor > 0;
             const isCancelled = t.detalhes.includes('[CANCELADO]');
             const isCharge = t.tipo === 'Carregamento';
@@ -98,21 +95,18 @@ window.openTransactions = async function() {
             if (isCharge) {
                 title = 'Carregamento de Saldo';
                 icon = '➕';
-                details = t.detalhes; // Ex: 'MB Way'
+                details = t.detalhes;
             } else if (t.tipo === 'Reembolso') {
                 title = 'Reembolso de Reserva';
                 icon = '↩️';
-                details = t.detalhes; // Ex: 'Taxa 1.50€'
+                details = t.detalhes;
             } else if (t.tipo === 'Reserva') {
                 title = isCancelled ? 'Reserva Cancelada' : 'Reserva Ativa';
                 icon = isCancelled ? '🚫' : '⚡';
-                // Mostra estação + detalhes da carga/metodo.
                 details = `${t.estacao} • ${t.detalhes.split(' • ')[0] || ''}`; 
-                
                 if (isCancelled) details = t.estacao + ' (Cancelada)';
             }
             
-            // Botão Cancelar aparece se: For Reserva e NÃO estiver cancelada
             let btnCancel = '';
             if (t.tipo === 'Reserva' && !isCancelled) {
                 btnCancel = `<button onclick="cancelarReserva(${t.id})" class="btn-cancel-mini">Cancelar</button>`;
@@ -134,7 +128,6 @@ window.openTransactions = async function() {
         });
 
     } catch (e) {
-        console.error("Erro ao carregar histórico:", e);
         container.innerHTML = '<p style="color:#e74c3c; text-align:center;">Erro ao carregar histórico.</p>';
     }
 }
@@ -143,7 +136,8 @@ window.cancelarReserva = async function(id) {
     if(!confirm("Deseja cancelar esta reserva?\n\nSerá devolvido ao saldo com uma taxa de 1.50€.")) return;
 
     try {
-        const response = await fetch('http://localhost:3000/api/cancelar-transacao', {
+        // CORREÇÃO: Removido localhost
+        const response = await fetch('/api/cancelar-transacao', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -166,7 +160,6 @@ window.cancelarReserva = async function(id) {
     }
 }
 
-// --- UTILITÁRIOS FORMS (MANTÉM IGUAL) ---
 function setupAddCarForm(email) {
     const form = document.getElementById('add-car-form');
     if(!form) return;
@@ -174,7 +167,8 @@ function setupAddCarForm(email) {
         e.preventDefault();
         const data = Object.fromEntries(new FormData(form).entries());
         data.email = email;
-        await fetch('http://localhost:3000/api/adicionar-carro', {
+        // CORREÇÃO: Removido localhost
+        await fetch('/api/adicionar-carro', {
             method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
         });
         form.reset(); closeAllSheets(); carregarGaragem(email);
@@ -183,16 +177,13 @@ function setupAddCarForm(email) {
 
 window.removerCarro = async (id) => {
     if(confirm('Apagar?')) {
-        await fetch('http://localhost:3000/api/remover-carro', {
+        // CORREÇÃO: Removido localhost
+        await fetch('/api/remover-carro', {
             method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})
         });
         carregarGaragem(localStorage.getItem('email'));
     }
 };
-
-// UI Helpers
-window.openAddCar = () => openSheet('sheet-add-car');
-window.openEditProfile = () => openSheet('sheet-profile');
 
 function openSheet(id) {
     document.getElementById('overlay').classList.add('active');
