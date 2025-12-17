@@ -74,13 +74,15 @@ window.onload = async function() {
         }).addTo(map);
     }
 
-    // 4. Carregar Dados Iniciais (Caminhos Relativos para o Render)
+    // 4. Carregar Dados Iniciais
     localStorage.setItem('email', 'cliente@multipower.pt');
     
-    await carregarCarros();
-    await carregarSaldo();
-    await carregarMinhasReservas();
+    // CORREÇÃO CRÍTICA: Cada chamada tem o seu try/catch para não bloquear o mapa
+    try { await carregarCarros(); } catch(e) { console.error("Erro ao carregar carros:", e); }
+    try { await carregarSaldo(); } catch(e) { console.error("Erro ao carregar saldo:", e); }
+    try { await carregarMinhasReservas(); } catch(e) { console.error("Erro ao carregar reservas:", e); }
     
+    // Garante que as estações aparecem mesmo que o servidor falhe
     adicionarEstacoesTeste(); 
     carregarEstacoes({ lat: MY_LAT, lng: MY_LNG });
     
@@ -114,13 +116,11 @@ function desenharRota(destLat, destLng) {
 }
 
 async function carregarMinhasReservas() {
-    try {
-        const email = localStorage.getItem('email');
-        // CORREÇÃO: Caminho relativo para o Render
-        const res = await fetch(`/api/transacoes/${email}`);
-        const transacoes = await res.json();
-        minhasReservas = transacoes.filter(t => t.tipo === 'Reserva' && !t.detalhes.includes('[CANCELADO]'));
-    } catch(e) { console.error("Erro reservas:", e); }
+    const email = localStorage.getItem('email');
+    // Caminho relativo para o Render
+    const res = await fetch(`/api/transacoes/${email}`);
+    const transacoes = await res.json();
+    minhasReservas = Array.isArray(transacoes) ? transacoes.filter(t => t.tipo === 'Reserva' && !t.detalhes.includes('[CANCELADO]')) : [];
 }
 
 function adicionarEstacoesTeste() {
@@ -139,33 +139,28 @@ function adicionarEstacoesTeste() {
 }
 
 async function carregarCarros() {
-    try {
-        // CORREÇÃO: Caminho relativo para o Render
-        const resp = await fetch(`/api/carros/${localStorage.getItem('email')}`);
-        carros = await resp.json();
-        const select = document.getElementById('car-select');
-        if(select) {
-            select.innerHTML = '';
-            if(carros.length > 0) {
-                carros.forEach((c, index) => {
-                    const opt = document.createElement('option');
-                    opt.value = c.id; opt.text = `${c.marca} ${c.modelo}`;
-                    select.add(opt);
-                    if(index === 0) carroSelecionado = c;
-                });
-            } else { select.innerHTML = '<option>Sem carros</option>'; }
-        }
-    } catch(e) { console.error("Erro carros:", e); }
+    const resp = await fetch(`/api/carros/${localStorage.getItem('email')}`);
+    carros = await resp.json();
+    const select = document.getElementById('car-select');
+    if(select) {
+        select.innerHTML = '';
+        if(Array.isArray(carros) && carros.length > 0) {
+            carros.forEach((c, index) => {
+                const opt = document.createElement('option');
+                opt.value = c.id; opt.text = `${c.marca} ${c.modelo}`;
+                select.add(opt);
+                if(index === 0) carroSelecionado = c;
+            });
+        } else { select.innerHTML = '<option>Sem carros</option>'; }
+    }
 }
 
 async function carregarSaldo() {
-    try {
-        // CORREÇÃO: Caminho relativo para o Render
-        const resp = await fetch(`/api/wallet/${localStorage.getItem('email')}`);
-        const data = await resp.json();
-        saldo = data.saldo || 0;
-        document.getElementById('saldo-display').textContent = `${saldo.toFixed(2)}€`;
-    } catch(e) {}
+    const resp = await fetch(`/api/wallet/${localStorage.getItem('email')}`);
+    const data = await resp.json();
+    saldo = data.saldo || 0;
+    const display = document.getElementById('saldo-display');
+    if(display) display.textContent = `${saldo.toFixed(2)}€`;
 }
 
 async function carregarEstacoes(centro) {
@@ -173,7 +168,7 @@ async function carregarEstacoes(centro) {
         const response = await fetch(`https://api.openchargemap.io/v3/poi/?output=json&countrycode=US&latitude=${centro.lat}&longitude=${centro.lng}&maxresults=50&distance=10&compact=true&verbose=false&key=1b6229d7-8a8d-4e66-9d0f-2e101e00f789`);
         const data = await response.json();
         data.forEach(poi => adicionarMarcador(poi));
-    } catch (e) { console.log("Erro API:", e); }
+    } catch (e) { console.log("Erro API Externa:", e); }
 }
 
 function adicionarMarcador(poi) {
@@ -263,7 +258,6 @@ window.cancelarReservaDoMapa = async function(id) {
     if(!confirm("Cancelar reserva? Taxa: 1.50€")) return;
 
     try {
-        // CORREÇÃO: Caminho relativo para o Render
         const response = await fetch('/api/cancelar-transacao', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -311,7 +305,6 @@ window.confirmarTransacao = async function() {
     btn.disabled = true;
 
     try {
-        // CORREÇÃO: Caminho relativo para o Render
         const response = await fetch('/api/confirmar-pagamento', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -325,12 +318,11 @@ window.confirmarTransacao = async function() {
             })
         });
 
-        const res = await response.json();
-
         if (response.ok) {
             alert(`✅ Confirmado!`);
             location.reload(); 
         } else {
+            const res = await response.json();
             alert("❌ Erro: " + res.error);
         }
     } catch (err) {
