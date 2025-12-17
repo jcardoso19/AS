@@ -2,16 +2,16 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-// Caminho absoluto para a pasta backend/db
-const dbFolder = path.resolve(__dirname, 'db');
+// Caminho para a pasta db na raiz
+const dbFolder = path.join(__dirname, '../db');
+
 if (!fs.existsSync(dbFolder)){
     fs.mkdirSync(dbFolder, { recursive: true });
 }
 
-const dbPath = path.resolve(dbFolder, 'users.db');
+const dbPath = path.join(dbFolder, 'users.db');
 const db = new sqlite3.Database(dbPath);
 
-// ... (resto do código de criação de tabelas igual ao que já tens)
 db.serialize(() => {
   // Tabelas
   db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -30,8 +30,7 @@ db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS cars (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
-    marca TEXT, modelo TEXT, ano TEXT, matricula TEXT, cor TEXT,
-    battery_size REAL DEFAULT 50.0, 
+    marca TEXT, modelo TEXT, matricula TEXT, battery_size REAL DEFAULT 50.0, 
     connection_type INTEGER DEFAULT 33, 
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
@@ -43,7 +42,7 @@ db.serialize(() => {
     FOREIGN KEY(user_id) REFERENCES users(id)
   )`);
 
-  // Inserir Utilizador de Teste
+  // Dados de teste
   db.run(`INSERT OR IGNORE INTO users (nome, apelido, email, password, co2_saved, points) 
           VALUES ('Cliente', 'Demo', 'cliente@multipower.pt', '1234', 0.0, 0)`);
   
