@@ -1,13 +1,15 @@
 document.addEventListener('DOMContentLoaded', function () {
-    // --- MODO SEM LOGIN (Utilizador Fixo) ---
-    const email = 'cliente@multipower.pt';
-    localStorage.setItem('email', email); // Garante que o email fica salvo para o Mapa também
+    // --- MODO AUTOMÁTICO (Sem Login) ---
+    const emailFixo = 'cliente@multipower.pt';
+    
+    // Forçar sempre este email
+    localStorage.setItem('email', emailFixo);
+    console.log("Sessão iniciada automaticamente para: " + emailFixo);
 
-    console.log("Modo automático: Logado como " + email);
-
-    carregarPerfil(email);
-    carregarGaragem(email);
-    setupAddCarForm(email);
+    // Carregar dados
+    carregarPerfil(emailFixo);
+    carregarGaragem(emailFixo);
+    setupAddCarForm(emailFixo);
 });
 
 async function carregarPerfil(email) {
@@ -15,7 +17,7 @@ async function carregarPerfil(email) {
         const res = await fetch(`/api/perfil/${email}`);
         const user = await res.json();
         
-        // Se a API devolver o utilizador, preenchemos os dados
+        // Preencher dados na página
         if (user && user.nome) {
             document.querySelector('.profile-name').textContent = `${user.nome} ${user.apelido || ''}`;
             document.querySelector('.profile-email').textContent = user.email;
@@ -24,12 +26,13 @@ async function carregarPerfil(email) {
             
             const editEmail = document.getElementById('edit-email');
             if(editEmail) editEmail.value = user.email;
-            const editPhone = document.getElementById('edit-phone');
-            if(editPhone) editPhone.value = user.telefone || '';
+        } else {
+            // Se o user não existir na BD (ex: reset do Render), mostra isto
+            document.querySelector('.profile-name').textContent = "Cliente Demo";
+            document.querySelector('.profile-email').textContent = email;
         }
     } catch(e) { 
-        console.error("Erro ao carregar perfil:", e);
-        document.querySelector('.profile-name').textContent = "Cliente Demo";
+        console.error("Erro perfil:", e);
     }
 }
 
@@ -41,7 +44,7 @@ async function carregarGaragem(email) {
         lista.innerHTML = '';
 
         if (!carros || carros.length === 0) {
-            lista.innerHTML = `<div style="background:#252525; padding:20px; border-radius:12px; text-align:center; color:#888;">Garagem vazia.</div>`;
+            lista.innerHTML = `<div style="background:#252525; padding:20px; border-radius:12px; text-align:center; color:#888;">Ainda sem carros.</div>`;
             return;
         }
 
@@ -49,9 +52,7 @@ async function carregarGaragem(email) {
             const div = document.createElement('div');
             div.className = 'car-card';
             const isCCS = carro.connection_type == 33;
-            const plugName = isCCS ? 'CCS 2' : 'Type 2';
-            const plugColor = isCCS ? '#4bc0c0' : '#f39c12';
-
+            
             div.innerHTML = `
                 <div class="car-icon-box">🚗</div>
                 <div class="car-info">
@@ -59,19 +60,18 @@ async function carregarGaragem(email) {
                     <div class="car-meta">
                         <span class="car-tag">${carro.matricula}</span>
                         <span class="car-tag">🔋 ${carro.battery_size} kWh</span>
-                        <span class="car-tag" style="color:${plugColor}">${plugName}</span>
                     </div>
                 </div>
                 <button class="btn-delete" onclick="removerCarro(${carro.id})">✕</button>
             `;
             lista.appendChild(div);
         });
-    } catch(e) { console.error("Erro ao carregar garagem:", e); }
+    } catch(e) { console.error("Erro garagem:", e); }
 }
 
 window.openTransactions = async function() {
     const container = document.getElementById('reservations-container');
-    container.innerHTML = '<p style="text-align:center; color:#888;">A carregar histórico...</p>';
+    container.innerHTML = '<p style="text-align:center; color:#888;">A atualizar...</p>';
     
     openSheet('sheet-transactions'); 
 
@@ -83,85 +83,62 @@ window.openTransactions = async function() {
         container.innerHTML = '';
 
         if (!transacoes || transacoes.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#888; margin-top:20px;">Sem movimentos.</p>';
+            container.innerHTML = '<p style="text-align:center; color:#888; margin-top:20px;">Sem histórico.</p>';
             return;
         }
 
         transacoes.forEach(t => {
-            const isRefund = t.tipo === 'Reembolso' || (t.detalhes && (t.detalhes.includes('Cancelada') || t.detalhes.includes('CANCELADO')));
             const isCancelled = t.detalhes && t.detalhes.includes('[CANCELADO]');
             const isCharge = t.tipo === 'Carregamento';
-
+            
             let valorClass = isCharge ? 'text-green' : 'text-red';
             if (isCancelled) valorClass = 'text-green'; 
 
-            let valorSinal = isCharge || isCancelled ? '+' : '-';
-            let valorDisplay = Math.abs(t.valor).toFixed(2);
-            
-            let icon = '⚡';
-            let title = t.estacao || 'Reserva';
-            
-            if (isCharge) { title = 'Carregamento Saldo'; icon = '➕'; }
-            if (isCancelled) { title += ' (Cancelada)'; icon = '🚫'; }
-
-            let btnCancel = '';
-            if (t.tipo === 'Reserva' && !isCancelled) {
-                btnCancel = `<button onclick="cancelarReserva(${t.id})" class="btn-cancel-mini">Cancelar</button>`;
-            }
+            let icon = isCharge ? '➕' : '⚡';
+            let title = t.estacao || 'Movimento';
+            if (isCancelled) { title += ' (Cancelado)'; icon = '🚫'; }
 
             const item = document.createElement('div');
             item.className = 'trans-item';
             item.innerHTML = `
                 <div class="trans-info">
                     <div class="trans-title">${icon} ${title}</div>
-                    <div class="trans-date">${t.data || ''}</div>
+                    <div class="trans-date">${t.detalhes || ''}</div>
                 </div>
                 <div class="trans-actions">
-                    <div class="trans-price ${valorClass}">${valorSinal}${valorDisplay}€</div>
-                    ${btnCancel}
+                    <div class="trans-price ${valorClass}">${Math.abs(t.valor).toFixed(2)}€</div>
+                    ${(t.tipo === 'Reserva' && !isCancelled) ? `<button onclick="cancelarReserva(${t.id})" class="btn-cancel-mini">X</button>` : ''}
                 </div>
             `;
             container.appendChild(item);
         });
-
-    } catch (e) {
-        container.innerHTML = '<p style="color:#e74c3c; text-align:center;">Erro ao carregar histórico.</p>';
-    }
+    } catch (e) { container.innerHTML = '<p>Erro ao carregar.</p>'; }
 }
 
 window.cancelarReserva = async function(id) {
-    if(!confirm("Deseja cancelar esta reserva? (Taxa: 1.50€)")) return;
-
+    if(!confirm("Cancelar reserva?")) return;
     try {
-        const response = await fetch('/api/cancelar-transacao', {
+        await fetch('/api/cancelar-transacao', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                id: id, 
-                user_email: localStorage.getItem('email') 
-            })
+            body: JSON.stringify({ id: id, user_email: localStorage.getItem('email') })
         });
-
-        const res = await response.json();
-
-        if (response.ok) {
-            alert(`✅ Cancelado. Reembolso: ${res.reembolso.toFixed(2)}€`);
-            openTransactions(); 
-            carregarPerfil(localStorage.getItem('email')); 
-        } else {
-            alert("Erro: " + (res.error || "Erro desconhecido"));
-        }
-    } catch(e) {
-        alert("Erro de comunicação.");
-    }
+        openTransactions(); 
+        carregarPerfil(localStorage.getItem('email')); 
+    } catch(e) { alert("Erro de ligação."); }
 }
 
 function setupAddCarForm(email) {
     const form = document.getElementById('add-car-form');
     if(!form) return;
-    form.addEventListener('submit', async (e) => {
+    
+    // Remove listeners antigos para evitar duplicação
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+
+    newForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const data = Object.fromEntries(new FormData(form).entries());
+        const data = Object.fromEntries(new FormData(newForm).entries());
         data.email = email;
         
         try {
@@ -172,13 +149,12 @@ function setupAddCarForm(email) {
             });
             
             if(response.ok) {
-                alert("Carro adicionado!");
-                form.reset(); 
+                alert("Carro guardado com sucesso!");
+                newForm.reset(); 
                 closeAllSheets(); 
                 carregarGaragem(email);
             } else {
-                const err = await response.json();
-                alert("Erro: " + (err.error || "Erro ao adicionar"));
+                alert("Erro ao guardar. Tente novamente.");
             }
         } catch(e) { alert("Erro de ligação."); }
     });
