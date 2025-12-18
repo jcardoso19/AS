@@ -3,9 +3,12 @@ const router = express.Router();
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-const dbPath = path.join(process.cwd(), 'db', 'users.db');
+// ALTERAÇÃO: Apontar para o mesmo ficheiro temporário que o server.js
+const dbPath = path.join('/tmp', 'users.db');
 const db = new sqlite3.Database(dbPath);
 
+// --- FUNÇÃO DE SEGURANÇA ---
+// O resto do código continua exatamente igual...
 // --- FUNÇÃO DE SEGURANÇA ---
 // Impede o erro "sucesso mas não grava"
 function ensureUser(email, callback) {

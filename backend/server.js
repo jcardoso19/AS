@@ -12,7 +12,8 @@ app.use(express.json());
 app.use(cors());
 
 // --- INICIAR BASE DE DADOS (Recuperação Automática) ---
-const dbFolder = path.join(process.cwd(), 'db');
+// ALTERAÇÃO: Usamos '/tmp' porque no Render é a única pasta com garantia de escrita
+const dbFolder = '/tmp'; 
 if (!fs.existsSync(dbFolder)) {
     try { fs.mkdirSync(dbFolder, { recursive: true }); } catch (e) {}
 }
