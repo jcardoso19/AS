@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            // CORREÇÃO: Removido localhost
+            // CORREÇÃO: Caminho relativo para o Render
             const response = await fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

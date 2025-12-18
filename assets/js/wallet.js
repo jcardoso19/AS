@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function carregarDadosWallet(email) {
     // 1. Carregar Saldo
     try {
-        // CORREÇÃO: Usar caminho relativo /api para funcionar no Render
+        // CORREÇÃO: Usar caminho relativo /api
         const resWallet = await fetch(`/api/wallet/${email}`);
         const wallet = await resWallet.json();
         document.getElementById('balance-display').textContent = `${(wallet.saldo || 0).toFixed(2)}€`;
@@ -18,7 +18,7 @@ async function carregarDadosWallet(email) {
     
     // 2. Carregar Transações
     try {
-        // CORREÇÃO: Usar caminho relativo /api para funcionar no Render
+        // CORREÇÃO: Usar caminho relativo /api
         const resTrans = await fetch(`/api/transacoes/${email}`);
         if (!resTrans.ok) throw new Error("Falha ao buscar transações");
         const transacoes = await resTrans.json();
@@ -39,12 +39,11 @@ function renderTransacoes(transacoes) {
     }
 
     transacoes.forEach(t => {
-        // Se o tipo for 'Carregamento' ou o valor for positivo, é Crédito.
         const isCredit = t.tipo === 'Carregamento' || t.valor > 0;
         const valorDisplay = Math.abs(t.valor).toFixed(2);
         
         let title = t.tipo;
-        let details = t.detalhes || t.estacao; // Usa detalhes ou estação
+        let details = t.detalhes || t.estacao;
 
         if (t.tipo === 'Reserva') {
             title = 'Reserva de Carregamento';
@@ -71,13 +70,12 @@ function renderTransacoes(transacoes) {
     });
 }
 
-
 // --- NOVA FUNCIONALIDADE: ADICIONAR FUNDOS ---
 window.addFunds = async function() {
     const valorInput = prompt("Quanto deseja carregar? (Ex: 25.00)");
     
     if (valorInput === null || valorInput.trim() === "") {
-        return; // Operação cancelada
+        return; 
     }
 
     const valor = parseFloat(valorInput.replace(',', '.'));
@@ -94,7 +92,7 @@ window.addFunds = async function() {
     }
 
     try {
-        // CORREÇÃO: Usar caminho relativo /api para funcionar no Render
+        // CORREÇÃO: Usar caminho relativo /api
         const response = await fetch('/api/adicionar-saldo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -109,7 +107,6 @@ window.addFunds = async function() {
 
         if (response.ok) {
             alert(`✅ Sucesso! Foram adicionados ${res.valor_adicionado.toFixed(2)}€ ao seu saldo.`);
-            // Recarrega os dados para atualizar o ecrã
             carregarDadosWallet(localStorage.getItem('email'));
         } else {
             alert("❌ Erro ao carregar saldo: " + (res.error || "Falha desconhecida."));

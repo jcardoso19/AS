@@ -74,15 +74,14 @@ window.onload = async function() {
         }).addTo(map);
     }
 
-    // 4. Carregar Dados Iniciais
+    // 4. Carregar Dados Iniciais (Caminhos Relativos para o Render)
     localStorage.setItem('email', 'cliente@multipower.pt');
     
-    // CORREÇÃO CRÍTICA: Cada chamada tem o seu try/catch para não bloquear o mapa
-    try { await carregarCarros(); } catch(e) { console.error("Erro ao carregar carros:", e); }
-    try { await carregarSaldo(); } catch(e) { console.error("Erro ao carregar saldo:", e); }
-    try { await carregarMinhasReservas(); } catch(e) { console.error("Erro ao carregar reservas:", e); }
+    // Blocos Try/Catch individuais para não bloquear o mapa se um falhar
+    try { await carregarCarros(); } catch(e) { console.error("Erro carros", e); }
+    try { await carregarSaldo(); } catch(e) { console.error("Erro saldo", e); }
+    try { await carregarMinhasReservas(); } catch(e) { console.error("Erro reservas", e); }
     
-    // Garante que as estações aparecem mesmo que o servidor falhe
     adicionarEstacoesTeste(); 
     carregarEstacoes({ lat: MY_LAT, lng: MY_LNG });
     
@@ -117,7 +116,7 @@ function desenharRota(destLat, destLng) {
 
 async function carregarMinhasReservas() {
     const email = localStorage.getItem('email');
-    // Caminho relativo para o Render
+    // CORREÇÃO: Caminho relativo
     const res = await fetch(`/api/transacoes/${email}`);
     const transacoes = await res.json();
     minhasReservas = Array.isArray(transacoes) ? transacoes.filter(t => t.tipo === 'Reserva' && !t.detalhes.includes('[CANCELADO]')) : [];
@@ -139,6 +138,7 @@ function adicionarEstacoesTeste() {
 }
 
 async function carregarCarros() {
+    // CORREÇÃO: Caminho relativo
     const resp = await fetch(`/api/carros/${localStorage.getItem('email')}`);
     carros = await resp.json();
     const select = document.getElementById('car-select');
@@ -156,6 +156,7 @@ async function carregarCarros() {
 }
 
 async function carregarSaldo() {
+    // CORREÇÃO: Caminho relativo
     const resp = await fetch(`/api/wallet/${localStorage.getItem('email')}`);
     const data = await resp.json();
     saldo = data.saldo || 0;
@@ -168,7 +169,7 @@ async function carregarEstacoes(centro) {
         const response = await fetch(`https://api.openchargemap.io/v3/poi/?output=json&countrycode=US&latitude=${centro.lat}&longitude=${centro.lng}&maxresults=50&distance=10&compact=true&verbose=false&key=1b6229d7-8a8d-4e66-9d0f-2e101e00f789`);
         const data = await response.json();
         data.forEach(poi => adicionarMarcador(poi));
-    } catch (e) { console.log("Erro API Externa:", e); }
+    } catch (e) { console.log("Erro API:", e); }
 }
 
 function adicionarMarcador(poi) {
@@ -258,6 +259,7 @@ window.cancelarReservaDoMapa = async function(id) {
     if(!confirm("Cancelar reserva? Taxa: 1.50€")) return;
 
     try {
+        // CORREÇÃO: Caminho relativo
         const response = await fetch('/api/cancelar-transacao', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -305,6 +307,7 @@ window.confirmarTransacao = async function() {
     btn.disabled = true;
 
     try {
+        // CORREÇÃO: Caminho relativo
         const response = await fetch('/api/confirmar-pagamento', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -318,11 +321,12 @@ window.confirmarTransacao = async function() {
             })
         });
 
+        const res = await response.json();
+
         if (response.ok) {
             alert(`✅ Confirmado!`);
             location.reload(); 
         } else {
-            const res = await response.json();
             alert("❌ Erro: " + res.error);
         }
     } catch (err) {
