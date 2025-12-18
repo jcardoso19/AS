@@ -1,118 +1,62 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Tenta obter o email do utilizador logado, caso contrário usa o de teste
-    const email = localStorage.getItem('email') || 'cliente@multipower.pt';
-    carregarDadosWallet(email);
+document.addEventListener('DOMContentLoaded', function() {
+    // --- MODO SEM LOGIN: Utilizador Fixo ---
+    const email = 'cliente@multipower.pt';
+    localStorage.setItem('email', email);
+    
+    console.log("Carteira iniciada para: " + email);
+    
+    // 1. Atualizar saldo ao entrar
+    atualizarSaldo(email);
+
+    // 2. Configurar botão de carregar
+    const btnCarregar = document.querySelector('.add-funds-btn'); 
+    
+    // Verifica se o botão existe para evitar erros
+    if(btnCarregar) {
+        btnCarregar.addEventListener('click', () => {
+             const valor = prompt("Quanto deseja carregar? (Ex: 20)");
+             
+             // Validação simples
+             if(valor && !isNaN(valor) && parseFloat(valor) > 0) {
+                 adicionarSaldo(email, parseFloat(valor));
+             } else if (valor !== null) {
+                 alert("Por favor insira um valor válido.");
+             }
+        });
+    }
 });
 
-async function carregarDadosWallet(email) {
-    // 1. Carregar Saldo
+async function atualizarSaldo(email) {
     try {
-        // CORREÇÃO: Usar caminho relativo /api
-        const resWallet = await fetch(`/api/wallet/${email}`);
-        const wallet = await resWallet.json();
-        document.getElementById('balance-display').textContent = `${(wallet.saldo || 0).toFixed(2)}€`;
-    } catch(e) { 
-        document.getElementById('balance-display').textContent = 'Erro';
-        console.error("Erro ao carregar saldo:", e);
-    }
-    
-    // 2. Carregar Transações
-    try {
-        // CORREÇÃO: Usar caminho relativo /api
-        const resTrans = await fetch(`/api/transacoes/${email}`);
-        if (!resTrans.ok) throw new Error("Falha ao buscar transações");
-        const transacoes = await resTrans.json();
-        renderTransacoes(transacoes);
-    } catch(e) {
-        document.getElementById('transactions-feed').innerHTML = `<p style="text-align:center; color:#e74c3c;">Erro ao ligar ao servidor.</p>`;
-        console.error("Erro ao buscar transações:", e);
-    }
-}
-
-function renderTransacoes(transacoes) {
-    const feed = document.getElementById('transactions-feed');
-    feed.innerHTML = '';
-    
-    if (transacoes.length === 0) {
-        feed.innerHTML = `<p style="text-align:center; color:#666;">Sem movimentos registados.</p>`;
-        return;
-    }
-
-    transacoes.forEach(t => {
-        const isCredit = t.tipo === 'Carregamento' || t.valor > 0;
-        const valorDisplay = Math.abs(t.valor).toFixed(2);
+        const res = await fetch(`/api/wallet/${email}`);
+        const data = await res.json();
         
-        let title = t.tipo;
-        let details = t.detalhes || t.estacao;
-
-        if (t.tipo === 'Reserva') {
-            title = 'Reserva de Carregamento';
-        } else if (t.tipo === 'Reembolso') {
-            title = 'Reembolso';
-        } else if (t.tipo === 'Carregamento') {
-             title = 'Carregamento de Saldo';
-             details = t.detalhes;
+        // Atualiza o texto do saldo
+        const el = document.querySelector('.balance-amount');
+        if(el) {
+            el.textContent = (data.saldo || 0).toFixed(2) + '€';
         }
-
-        const item = document.createElement('div');
-        item.className = 'transaction-item';
-        
-        item.innerHTML = `
-            <div class="trans-info">
-                <div class="trans-title">${isCredit ? '➕ ' : '⚡ '}${title}</div>
-                <div class="trans-date">${details}</div>
-            </div>
-            <div class="trans-amount ${isCredit ? 'amount-credit' : 'amount-debit'}">
-                ${isCredit ? '+' : '-'} ${valorDisplay}€
-            </div>
-        `;
-        feed.appendChild(item);
-    });
+    } catch(e) { 
+        console.error("Erro ao ler saldo:", e); 
+    }
 }
 
-// --- NOVA FUNCIONALIDADE: ADICIONAR FUNDOS ---
-window.addFunds = async function() {
-    const valorInput = prompt("Quanto deseja carregar? (Ex: 25.00)");
-    
-    if (valorInput === null || valorInput.trim() === "") {
-        return; 
-    }
-
-    const valor = parseFloat(valorInput.replace(',', '.'));
-    
-    if (isNaN(valor) || valor <= 0) {
-        alert("Por favor, insira um valor numérico válido e positivo.");
-        return;
-    }
-    
-    const metodo = "MB WAY (Simulado)";
-    
-    if (!confirm(`Confirma o carregamento de ${valor.toFixed(2)}€ via ${metodo}?`)) {
-        return;
-    }
-
+async function adicionarSaldo(email, valor) {
     try {
-        // CORREÇÃO: Usar caminho relativo /api
-        const response = await fetch('/api/adicionar-saldo', {
+        const res = await fetch('/api/adicionar-saldo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                email: localStorage.getItem('email'),
-                valor: valor,
-                metodo: metodo
-            })
+            body: JSON.stringify({ email: email, valor: valor })
         });
-
-        const res = await response.json();
-
-        if (response.ok) {
-            alert(`✅ Sucesso! Foram adicionados ${res.valor_adicionado.toFixed(2)}€ ao seu saldo.`);
-            carregarDadosWallet(localStorage.getItem('email'));
+        
+        if (res.ok) {
+            alert(`Sucesso! Foram adicionados ${valor}€ à sua conta.`);
+            atualizarSaldo(email); // Atualiza visualmente sem recarregar
         } else {
-            alert("❌ Erro ao carregar saldo: " + (res.error || "Falha desconhecida."));
+            const err = await res.json();
+            alert("Erro: " + (err.error || "Não foi possível carregar."));
         }
-    } catch(e) {
-        console.error("Erro de comunicação ao carregar saldo:", e);
-        alert("Erro de ligação ao servidor. Verifique a consola.");
+    } catch(e) { 
+        alert("Erro de ligação ao servidor."); 
     }
-};
+}
