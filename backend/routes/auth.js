@@ -3,51 +3,40 @@ const router = express.Router();
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-// Aponta SEMPRE para a mesma base de dados criada no server.js
 const dbPath = path.join(process.cwd(), 'db', 'users.db');
 const db = new sqlite3.Database(dbPath);
 
-// --- FUNÇÃO DE SEGURANÇA MÁXIMA ---
-// Se o ID for nulo, cria o utilizador na hora. Nunca falha.
+// --- SEGURANÇA: Garante que o ID existe antes de gravar ---
 function ensureUser(email, callback) {
     db.get("SELECT id FROM users WHERE email = ?", [email], (err, row) => {
         if (row) return callback(row.id);
-
-        console.log(`⚠️ RECUPERAÇÃO: A recriar utilizador ${email} perdido...`);
+        
+        // Se não existir, CRIA DE NOVO
         db.run("INSERT INTO users (nome, apelido, email, password) VALUES ('Cliente', 'Auto', ?, '1234')", [email], function(err) {
             if (err) return callback(null);
             const newId = this.lastID;
-            db.run("INSERT INTO wallets (user_id, saldo) VALUES (?, 20.00)", [newId], () => {
-                callback(newId);
-            });
+            db.run("INSERT INTO wallets (user_id, saldo) VALUES (?, 20.00)", [newId], () => callback(newId));
         });
     });
 }
 
-// 1. CARREGAR SALDO
+// ROTA: Carregar Saldo
 router.post('/adicionar-saldo', (req, res) => {
     const { email, valor } = req.body;
     ensureUser(email, (userId) => {
-        if (!userId) return res.status(500).json({ error: "Erro crítico de utilizador" });
-        
-        db.run("UPDATE wallets SET saldo = saldo + ? WHERE user_id = ?", [valor, userId], (err) => {
-            if (err) return res.status(500).json(err);
-            
-            // Regista no histórico
-            db.run("INSERT INTO transactions (user_id, tipo, valor, detalhes) VALUES (?, 'Carregamento', ?, 'Multibanco')", 
-            [userId, valor, valor], () => {
-                res.json({ success: true });
-            });
+        if (!userId) return res.status(500).json({ error: "Erro DB" });
+        db.run("UPDATE wallets SET saldo = saldo + ? WHERE user_id = ?", [valor, userId], () => {
+            db.run("INSERT INTO transactions (user_id, tipo, valor, detalhes) VALUES (?, 'Carregamento', ?, 'Multibanco')", [userId, valor, valor]);
+            res.json({ success: true });
         });
     });
 });
 
-// 2. ADICIONAR CARRO
+// ROTA: Adicionar Carro
 router.post('/adicionar-carro', (req, res) => {
     const { email, marca, modelo, matricula, battery_size, connection_type } = req.body;
     ensureUser(email, (userId) => {
-        if (!userId) return res.status(500).json({ error: "Erro crítico de utilizador" });
-
+        if (!userId) return res.status(500).json({ error: "Erro DB" });
         db.run("INSERT INTO cars (user_id, marca, modelo, matricula, battery_size, connection_type) VALUES (?, ?, ?, ?, ?, ?)", 
         [userId, marca, modelo, matricula, battery_size || 50, connection_type || 33], function(err) {
             if (err) return res.status(500).json({ error: err.message });
@@ -56,67 +45,36 @@ router.post('/adicionar-carro', (req, res) => {
     });
 });
 
-// 3. CONFIRMAR RESERVA (Com Rota e Detalhes)
+// ROTA: Confirmar Reserva (Com Rota)
 router.post('/confirmar-pagamento', (req, res) => {
     const { email, valor, estacao, tempo_chegada, kwh_estimado } = req.body;
     ensureUser(email, (userId) => {
-        if (!userId) return res.status(500).json({ error: "Erro crítico de utilizador" });
-
-        // Verificar saldo
+        if (!userId) return res.status(500).json({ error: "Erro DB" });
+        
         db.get("SELECT saldo FROM wallets WHERE user_id = ?", [userId], (err, row) => {
             if (!row || row.saldo < valor) return res.status(400).json({ error: "Saldo Insuficiente" });
-
+            
             db.serialize(() => {
-                // Desconta o dinheiro
                 db.run("UPDATE wallets SET saldo = saldo - ? WHERE user_id = ?", [valor, userId]);
-                
-                // Grava a transação com os DETALHES DA ROTA
                 const detalhes = `Viagem: ${tempo_chegada || '15 min'} • ${kwh_estimado || '20'} kWh`;
-                
                 db.run("INSERT INTO transactions (user_id, tipo, estacao, valor, detalhes) VALUES (?, 'Reserva', ?, ?, ?)", 
-                [userId, estacao, valor, detalhes], (err) => {
-                    if (err) return res.status(500).json(err);
-                    res.json({ success: true });
-                });
+                [userId, estacao, valor, detalhes], () => res.json({ success: true }));
             });
         });
     });
 });
 
-// --- ROTAS DE LEITURA ---
-router.get('/perfil/:email', (req, res) => {
-    ensureUser(req.params.email, (id) => {
-        db.get("SELECT * FROM users WHERE id = ?", [id], (err, row) => res.json(row || {}));
-    });
-});
-
-router.get('/wallet/:email', (req, res) => {
-    ensureUser(req.params.email, (id) => {
-        db.get("SELECT saldo FROM wallets WHERE user_id = ?", [id], (err, row) => res.json(row || {saldo: 0}));
-    });
-});
-
-router.get('/carros/:email', (req, res) => {
-    ensureUser(req.params.email, (id) => {
-        db.all("SELECT * FROM cars WHERE user_id = ?", [id], (err, rows) => res.json(rows || []));
-    });
-});
-
-router.get('/transacoes/:email', (req, res) => {
-    ensureUser(req.params.email, (id) => {
-        db.all("SELECT * FROM transactions WHERE user_id = ? ORDER BY id DESC", [id], (err, rows) => res.json(rows || []));
-    });
-});
-
-router.post('/remover-carro', (req, res) => {
-    db.run("DELETE FROM cars WHERE id = ?", [req.body.id], () => res.json({success: true}));
-});
-
+// Rotas de Leitura
+router.get('/perfil/:email', (req, res) => ensureUser(req.params.email, (id) => db.get("SELECT * FROM users WHERE id = ?", [id], (e,r) => res.json(r||{}))));
+router.get('/wallet/:email', (req, res) => ensureUser(req.params.email, (id) => db.get("SELECT saldo FROM wallets WHERE user_id = ?", [id], (e,r) => res.json(r||{saldo:0}))));
+router.get('/carros/:email', (req, res) => ensureUser(req.params.email, (id) => db.all("SELECT * FROM cars WHERE user_id = ?", [id], (e,r) => res.json(r||[]))));
+router.get('/transacoes/:email', (req, res) => ensureUser(req.params.email, (id) => db.all("SELECT * FROM transactions WHERE user_id = ? ORDER BY id DESC", [id], (e,r) => res.json(r||[]))));
+router.post('/remover-carro', (req, res) => db.run("DELETE FROM cars WHERE id = ?", [req.body.id], () => res.json({success:true})));
 router.post('/cancelar-transacao', (req, res) => {
     const { id, user_email } = req.body;
     ensureUser(user_email, (userId) => {
         db.run("UPDATE wallets SET saldo = saldo + 8.50 WHERE user_id = ?", [userId]);
-        db.run("UPDATE transactions SET detalhes = '[CANCELADO]' WHERE id = ?", [id], () => res.json({success: true, reembolso: 8.50}));
+        db.run("UPDATE transactions SET detalhes = '[CANCELADO]' WHERE id = ?", [id], () => res.json({success:true, reembolso:8.50}));
     });
 });
 
