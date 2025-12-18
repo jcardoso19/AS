@@ -14,7 +14,11 @@ app.use(cors());
 // --- 2. OBRIGAR A DB A INICIAR ANTES DO SERVIDOR ---
 const dbFolder = path.join(process.cwd(), 'db');
 if (!fs.existsSync(dbFolder)) {
-    fs.mkdirSync(dbFolder, { recursive: true });
+    try {
+        fs.mkdirSync(dbFolder, { recursive: true });
+    } catch (e) {
+        console.error("Erro ao criar pasta db:", e);
+    }
 }
 
 const dbPath = path.join(dbFolder, 'users.db');
@@ -79,14 +83,22 @@ db.serialize(() => {
 const authRoutes = require('./routes/auth');
 app.use('/api', authRoutes);
 
-// Rota de Fallback para o Frontend
-app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) return res.status(404).json({ error: 'API not found' });
-    // Se pedir login.html (que não existe), manda para index ou conta
+// Rota de Fallback para o Frontend (CORRIGIDA PARA EXPRESS 5)
+// Usamos uma expressão regular (/(.*)/) para substituir o '*' que dava erro
+app.get(/(.*)/, (req, res) => {
+    // Se for uma chamada API que falhou, devolve JSON em vez de HTML
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    
+    // Se pedir login.html (que não existe), manda para index
     if (req.path.includes('login.html')) return res.redirect('/index.html');
     
     const file = path.join(process.cwd(), req.path);
-    if (fs.existsSync(file)) return res.sendFile(file);
+    if (fs.existsSync(file) && fs.lstatSync(file).isFile()) {
+        return res.sendFile(file);
+    }
+    // Fallback final: index.html
     res.sendFile(path.join(process.cwd(), 'index.html'));
 });
 
