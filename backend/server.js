@@ -1,53 +1,96 @@
 const express = require('express');
-const cors = require('cors');
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const app = express();
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
+const sqlite3 = require('sqlite3').verbose();
+const cors = require('cors');
 
-const app = express();
-const port = process.env.PORT || 10000;
+// --- 1. CONFIGURAÇÃO INICIAL ---
+const PORT = process.env.PORT || 3000;
+app.use(express.static(process.cwd())); 
+app.use(express.json());
+app.use(cors());
 
-// --- 1. GARANTIR PASTA DA BD NA RAIZ ---
-// Usa process.cwd() para garantir que fica na raiz do projeto no Render
+// --- 2. OBRIGAR A DB A INICIAR ANTES DO SERVIDOR ---
 const dbFolder = path.join(process.cwd(), 'db');
 if (!fs.existsSync(dbFolder)) {
     fs.mkdirSync(dbFolder, { recursive: true });
-    console.log("✅ Pasta 'db' criada na raiz.");
 }
 
-// --- 2. INICIALIZAR DADOS ---
-// Corre o script para criar tabelas e utilizador
-exec('node backend/init_db.js', (err, stdout) => {
-    if (err) console.error("Erro init_db:", err);
-    else console.log("BD Pronta:", stdout.trim());
+const dbPath = path.join(dbFolder, 'users.db');
+const db = new sqlite3.Database(dbPath);
+
+console.log("🔄 A inicializar Base de Dados...");
+
+db.serialize(() => {
+    // 1. Criar Tabelas (Se não existirem)
+    db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        nome TEXT, apelido TEXT, email TEXT UNIQUE, 
+        telefone TEXT, morada TEXT, password TEXT, 
+        co2_saved REAL DEFAULT 0, points INTEGER DEFAULT 0
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS wallets (
+        user_id INTEGER PRIMARY KEY, 
+        saldo REAL DEFAULT 0.00, 
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS cars (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        user_id INTEGER, 
+        marca TEXT, modelo TEXT, matricula TEXT, 
+        battery_size REAL DEFAULT 50.0, connection_type INTEGER DEFAULT 33, 
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS transactions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        user_id INTEGER, 
+        tipo TEXT, estacao TEXT, valor REAL, 
+        data DATETIME DEFAULT CURRENT_TIMESTAMP, 
+        detalhes TEXT, 
+        FOREIGN KEY(user_id) REFERENCES users(id)
+    )`);
+
+    // 2. Garantir que o Utilizador Padrão Existe (Reset à prova de falhas)
+    const emailFixo = 'cliente@multipower.pt';
+    db.get("SELECT id FROM users WHERE email = ?", [emailFixo], (err, row) => {
+        if (!row) {
+            console.log("⚠️ Utilizador não encontrado. A recriar...");
+            db.run(`INSERT INTO users (nome, apelido, email, password, co2_saved, points) 
+                    VALUES ('Cliente', 'Demo', ?, '1234', 12.5, 150)`, [emailFixo], function(err) {
+                if (!err) {
+                    const newId = this.lastID;
+                    db.run(`INSERT OR IGNORE INTO wallets (user_id, saldo) VALUES (?, 50.00)`, [newId]);
+                    console.log("✅ Utilizador e Carteira recriados com sucesso!");
+                }
+            });
+        } else {
+            // Garante que a carteira também existe mesmo que o user já exista
+            db.run(`INSERT OR IGNORE INTO wallets (user_id, saldo) VALUES (?, 50.00)`, [row.id]);
+            console.log("✅ Base de dados pronta e verificada.");
+        }
+    });
 });
 
-app.use(cors());
-app.use(express.json());
-
-// Servir ficheiros estáticos da raiz do projeto
-app.use(express.static(process.cwd()));
-
-// Carregar Rotas
+// --- 3. ROTAS ---
 const authRoutes = require('./routes/auth');
 app.use('/api', authRoutes);
 
-// Rota Chat IA
-const GOOGLE_API_KEY = process.env.GEMINI_API_KEY || "A_TUA_CHAVE_AQUI"; 
-const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-app.post('/api/chat', async (req, res) => {
-    try {
-        const { message } = req.body;
-        const result = await model.generateContent(`Responde curto em PT: ${message}`);
-        res.json({ reply: result.response.text() });
-    } catch (e) { 
-        res.status(500).json({ reply: "IA indisponível." }); 
-    }
+// Rota de Fallback para o Frontend
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) return res.status(404).json({ error: 'API not found' });
+    // Se pedir login.html (que não existe), manda para index ou conta
+    if (req.path.includes('login.html')) return res.redirect('/index.html');
+    
+    const file = path.join(process.cwd(), req.path);
+    if (fs.existsSync(file)) return res.sendFile(file);
+    res.sendFile(path.join(process.cwd(), 'index.html'));
 });
 
-app.listen(port, '0.0.0.0', () => {
-    console.log(`🚀 Servidor MultiPower Online na porta ${port}`);
+// --- 4. INICIAR SERVIDOR ---
+app.listen(PORT, () => {
+    console.log(`🚀 Servidor a correr na porta ${PORT}`);
 });
