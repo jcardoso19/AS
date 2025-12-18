@@ -1,6 +1,11 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const email = localStorage.getItem('email') || 'cliente@multipower.pt';
-    localStorage.setItem('email', email);
+    const email = localStorage.getItem('email');
+    
+    // Se não houver email, mandar para login
+    if (!email) {
+        window.location.href = 'login.html';
+        return;
+    }
 
     carregarPerfil(email);
     carregarGaragem(email);
@@ -9,25 +14,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
 async function carregarPerfil(email) {
     try {
-        // CORREÇÃO: Caminho relativo
         const res = await fetch(`/api/perfil/${email}`);
+        
+        // Se a API retornar 404 (user não encontrado), fazemos logout forçado
+        if (!res.ok) {
+            console.warn("Utilizador não encontrado. A terminar sessão.");
+            localStorage.removeItem('email');
+            window.location.href = 'login.html';
+            return;
+        }
+
         const user = await res.json();
-        if (user.nome) {
+        
+        if (user && user.nome) {
             document.querySelector('.profile-name').textContent = `${user.nome} ${user.apelido || ''}`;
             document.querySelector('.profile-email').textContent = user.email;
             document.getElementById('co2-val').textContent = user.co2_saved ? user.co2_saved.toFixed(1) : 0;
             document.getElementById('points-val').textContent = user.points || 0;
+            
             const editEmail = document.getElementById('edit-email');
             if(editEmail) editEmail.value = user.email;
             const editPhone = document.getElementById('edit-phone');
             if(editPhone) editPhone.value = user.telefone || '';
         }
-    } catch(e) { console.error("Erro ao carregar perfil:", e); }
+    } catch(e) { 
+        console.error("Erro ao carregar perfil:", e);
+        document.querySelector('.profile-name').textContent = "Erro de ligação";
+    }
 }
 
 async function carregarGaragem(email) {
     try {
-        // CORREÇÃO: Caminho relativo
         const res = await fetch(`/api/carros/${email}`);
         const carros = await res.json();
         const lista = document.getElementById('garage-list');
@@ -75,39 +92,28 @@ window.openTransactions = async function() {
 
         container.innerHTML = '';
 
-        if (transacoes.length === 0) {
+        if (!transacoes || transacoes.length === 0) {
             container.innerHTML = '<p style="text-align:center; color:#888; margin-top:20px;">Sem movimentos.</p>';
             return;
         }
 
         transacoes.forEach(t => {
-            const isRefund = t.tipo === 'Reembolso' || t.valor > 0;
+            const isRefund = t.tipo === 'Reembolso' || (t.detalhes.includes('Cancelada') || t.detalhes.includes('CANCELADO'));
             const isCancelled = t.detalhes.includes('[CANCELADO]');
             const isCharge = t.tipo === 'Carregamento';
 
-            let valorClass = isRefund || isCharge ? 'text-green' : 'text-red';
-            let valorSinal = isRefund || isCharge ? '+' : '-';
+            let valorClass = isCharge ? 'text-green' : 'text-red';
+            if (isCancelled) valorClass = 'text-green'; // Reembolso aparece verde
+
+            let valorSinal = isCharge || isCancelled ? '+' : '-';
             let valorDisplay = Math.abs(t.valor).toFixed(2);
             
-            let icon = '';
-            let title = '';
-            let details = t.detalhes;
-
-            if (isCharge) {
-                title = 'Carregamento de Saldo';
-                icon = '➕';
-                details = t.detalhes;
-            } else if (t.tipo === 'Reembolso') {
-                title = 'Reembolso de Reserva';
-                icon = '↩️';
-                details = t.detalhes;
-            } else if (t.tipo === 'Reserva') {
-                title = isCancelled ? 'Reserva Cancelada' : 'Reserva Ativa';
-                icon = isCancelled ? '🚫' : '⚡';
-                details = `${t.estacao} • ${t.detalhes.split(' • ')[0] || ''}`; 
-                if (isCancelled) details = t.estacao + ' (Cancelada)';
-            }
+            let icon = '⚡';
+            let title = t.estacao || 'Reserva';
             
+            if (isCharge) { title = 'Carregamento Saldo'; icon = '➕'; }
+            if (isCancelled) { title += ' (Cancelada)'; icon = '🚫'; }
+
             let btnCancel = '';
             if (t.tipo === 'Reserva' && !isCancelled) {
                 btnCancel = `<button onclick="cancelarReserva(${t.id})" class="btn-cancel-mini">Cancelar</button>`;
@@ -118,7 +124,7 @@ window.openTransactions = async function() {
             item.innerHTML = `
                 <div class="trans-info">
                     <div class="trans-title">${icon} ${title}</div>
-                    <div class="trans-date">${details}</div>
+                    <div class="trans-date">${t.data || ''}</div>
                 </div>
                 <div class="trans-actions">
                     <div class="trans-price ${valorClass}">${valorSinal}${valorDisplay}€</div>
@@ -153,7 +159,7 @@ window.cancelarReserva = async function(id) {
             openTransactions(); 
             carregarPerfil(localStorage.getItem('email')); 
         } else {
-            alert("Erro: " + res.error);
+            alert("Erro: " + (res.error || "Erro desconhecido"));
         }
     } catch(e) {
         alert("Erro de comunicação.");
@@ -169,27 +175,27 @@ function setupAddCarForm(email) {
         data.email = email;
         
         try {
-            // CORREÇÃO: Caminho relativo
             const response = await fetch('/api/adicionar-carro', {
                 method:'POST', 
                 headers:{'Content-Type':'application/json'}, 
                 body:JSON.stringify(data)
             });
+            
             if(response.ok) {
-                alert("Carro adicionado!");
+                alert("Carro adicionado com sucesso!");
                 form.reset(); 
                 closeAllSheets(); 
                 carregarGaragem(email);
             } else {
-                alert("Erro ao adicionar carro.");
+                const err = await response.json();
+                alert("Erro: " + (err.error || "Não foi possível adicionar"));
             }
         } catch(e) { alert("Erro de ligação."); }
     });
 }
 
 window.removerCarro = async (id) => {
-    if(confirm('Apagar?')) {
-        // CORREÇÃO: Caminho relativo
+    if(confirm('Tem a certeza que quer apagar este carro?')) {
         await fetch('/api/remover-carro', {
             method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id})
         });
@@ -197,7 +203,6 @@ window.removerCarro = async (id) => {
     }
 };
 
-// Funções chamadas pelo HTML (onclick)
 window.openAddCar = () => openSheet('sheet-add-car');
 window.openEditProfile = () => openSheet('sheet-profile');
 
