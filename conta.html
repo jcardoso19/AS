@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minha Conta - MultiPower</title>
     <link rel="stylesheet" href="assets/css/conta.css">
     <script src="assets/js/conta.js" defer></script>
@@ -13,17 +13,17 @@
         <div class="profile-avatar-wrapper">
             <img src="assets/images/conta.png" alt="Perfil" class="profile-image">
         </div>
-        <h1 class="profile-name">Bem-vindo</h1>
+        <h1 class="profile-name">A carregar...</h1>
         <div class="profile-email">...</div>
     </div>
 
     <div class="stats-grid">
         <div class="stat-card">
-            <span class="stat-value" id="co2-val">0</span>
+            <span class="stat-value">12.5</span>
             <span class="stat-label">kg CO₂ Poupado</span>
         </div>
         <div class="stat-card">
-            <span class="stat-value" id="points-val">0</span>
+            <span class="stat-value">340</span>
             <span class="stat-label">Pontos Power</span>
         </div>
     </div>
@@ -33,8 +33,7 @@
         <button onclick="openAddCar()" class="btn-mini-add">+ Adicionar</button>
     </div>
     <div id="garage-list">
-        <p style="text-align:center; color:#666; margin-top:20px;">A carregar garagem...</p>
-    </div>
+        </div>
 
     <div class="section-header">
         <span class="section-title">Definições</span>
@@ -58,39 +57,17 @@
         <div class="sheet-handle"></div>
         <h2>Nova Viatura</h2>
         <form id="add-car-form">
-            <div style="display: flex; gap: 10px;">
-                <div class="form-group" style="flex:1;">
-                    <label class="form-label">Marca</label>
-                    <input type="text" name="marca" placeholder="Ex: Tesla" required>
-                </div>
-                <div class="form-group" style="flex:1;">
-                    <label class="form-label">Modelo</label>
-                    <input type="text" name="modelo" placeholder="Model 3" required>
-                </div>
+            <div class="form-group">
+                <label class="form-label">Marca</label>
+                <input type="text" name="marca" placeholder="Ex: Tesla" required>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <div class="form-group" style="flex:1;">
-                    <label class="form-label">Ano</label>
-                    <input type="number" name="ano" placeholder="2023" required>
-                </div>
-                <div class="form-group" style="flex:1;">
-                    <label class="form-label">Matrícula</label>
-                    <input type="text" name="matricula" placeholder="AA-00-AA" required>
-                </div>
+            <div class="form-group">
+                <label class="form-label">Modelo</label>
+                <input type="text" name="modelo" placeholder="Model 3" required>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <div class="form-group" style="flex:1;">
-                    <label class="form-label">Bateria (kWh)</label>
-                    <input type="number" name="battery_size" value="50" required>
-                </div>
-                <div class="form-group" style="flex:1;">
-                    <label class="form-label">Tipo Ficha</label>
-                    <select name="connection_type">
-                        <option value="33">CCS 2 (Rápido)</option>
-                        <option value="25">Type 2 (Lento)</option>
-                        <option value="2">CHAdeMO</option>
-                    </select>
-                </div>
+            <div class="form-group">
+                <label class="form-label">Matrícula</label>
+                <input type="text" name="matricula" placeholder="AA-00-AA" required>
             </div>
             <button type="submit" class="btn-primary">Guardar na Garagem</button>
         </form>
@@ -104,47 +81,26 @@
 
     <div id="sheet-profile" class="bottom-sheet">
         <div class="sheet-handle"></div>
-        <h2>Editar Perfil</h2>
+        <h2>Os meus dados</h2>
         <form id="edit-profile-form">
             <div class="form-group">
                 <label class="form-label">Email</label>
-                <input type="email" name="email" id="edit-email" readonly style="opacity:0.6">
+                <input type="email" id="edit-email" readonly style="opacity:0.5">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Telefone</label>
+                <input type="tel" id="edit-phone" readonly style="opacity:0.5">
             </div>
             <button type="button" class="btn-primary" onclick="closeAllSheets()">Fechar</button>
         </form>
     </div>
 
     <div class="navbar">
-        <div class="navigation">
-            <a class="button" href="index.html">
-                <span class="nav-icon" style="font-size:20px; filter: invert(0.4);">🏠</span>
-                <div class="nav1">INÍCIO</div>
-            </a>
-        </div>
-        <div class="navigation">
-            <a class="button" href="mapa.html">
-                <img src="assets/images/map.png" alt="Mapa">
-                <div class="nav1">MAPA</div>
-            </a>
-        </div>
-        <div class="navigation">
-            <a class="button" href="wallet.html">
-                <img src="assets/images/wallet.png" alt="Carteira">
-                <div class="nav1">WALLET</div>
-            </a>
-        </div>
-        <div class="navigation">
-            <a class="button" href="chat.html">
-                <img src="assets/images/elon.png" alt="Chat">
-                <div class="nav1">CHAT</div>
-            </a>
-        </div>
-        <div class="navigation">
-            <a class="button active" href="conta.html" style="color:#4bc0c0;">
-                <img src="assets/images/conta.png" alt="Conta" style="filter: invert(0.8) sepia(1) saturate(3) hue-rotate(120deg);">
-                <div class="nav1">CONTA</div>
-            </a>
-        </div>
+        <div class="navigation"><a class="button" href="index.html"><span class="nav-icon">🏠</span><div class="nav1">INÍCIO</div></a></div>
+        <div class="navigation"><a class="button" href="mapa.html"><img src="assets/images/map.png"><div class="nav1">MAPA</div></a></div>
+        <div class="navigation"><a class="button" href="wallet.html"><img src="assets/images/wallet.png"><div class="nav1">WALLET</div></a></div>
+        <div class="navigation"><a class="button" href="chat.html"><img src="assets/images/elon.png"><div class="nav1">CHAT</div></a></div>
+        <div class="navigation"><a class="button active" href="conta.html" style="color:#4bc0c0;"><img src="assets/images/conta.png" style="filter: invert(0.8) sepia(1) saturate(3) hue-rotate(120deg);"><div class="nav1">CONTA</div></a></div>
     </div>
 
 </body>
